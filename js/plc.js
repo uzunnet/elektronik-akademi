@@ -117,6 +117,7 @@ const PLC = {
   /* ---------------- tarama ---------------- */
   scan(dt) {
     dt = dt || 0;
+    this.scans = (this.scans || 0) + 1;
     for (const rung of this.rungs) {
       let rungTrue = true;
       for (const col of rung.columns) {
@@ -596,7 +597,7 @@ const PLC = {
     h += '<div class="hmi-run ' + (this.running ? 'run' : 'stop') + '">' + (this.running ? 'RUN' : 'STOP') + '</div>';
     const cols = ["#22c55e", "#22c55e", "#f59e0b", "#f59e0b", "#4a9eff", "#4a9eff", "#a855f7", "#a855f7"];
     for (let i = 0; i < 8; i++) h += lamp(this.outputs["Y" + i], "Y" + i, cols[i]);
-    h += '<div class="hmi-scan">tarama <b>' + (this.scanMs || 0).toFixed(2) + '</b> ms</div>';
+    h += '<div class="hmi-scan"><span class="hmi-cycle">SCAN ' + String(this.scans || 0).padStart(6, "0") + '</span><span class="hmi-ms"><b>' + (this.scanMs || 0).toFixed(2) + '</b> ms</span></div>';
     h += '</div>';
     el.innerHTML = h;
   },

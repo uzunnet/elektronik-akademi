@@ -45,7 +45,51 @@ const Scenes = {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
     this.bg(ctx);
-    def.draw(ctx, this.s, PLC, this.W, this.H, this.t);
+    if (def.draw) def.draw(ctx, this.s, PLC, this.W, this.H, this.t);
+    this.vignette(ctx);
+    this.hud(ctx, PLC);
+  },
+
+  vignette(ctx) {
+    const W = this.W, H = this.H;
+    const vg = ctx.createRadialGradient(W / 2, H * 0.46, H * 0.22, W / 2, H * 0.5, W * 0.74);
+    vg.addColorStop(0, "rgba(0,0,0,0)");
+    vg.addColorStop(1, "rgba(0,0,0,0.40)");
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+  },
+
+  hud(ctx, plc) {
+    const W = this.W;
+    const run = plc && plc.running;
+    ctx.save();
+    ctx.textBaseline = "middle";
+    const label = run ? "RUN" : "STOP";
+    const col = run ? "#57e08f" : "#ff8f8f";
+    ctx.font = "700 15px Consolas,monospace";
+    const pw = ctx.measureText(label).width + 42;
+    ctx.fillStyle = run ? "rgba(16,44,26,.84)" : "rgba(54,20,20,.84)";
+    rr(ctx, 16, 14, pw, 32, 16); ctx.fill();
+    ctx.strokeStyle = run ? "rgba(87,224,143,.55)" : "rgba(255,143,143,.55)";
+    ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(31, 30, 6, 0, 7);
+    ctx.fillStyle = col;
+    if (run) { ctx.shadowColor = col; ctx.shadowBlur = 12; }
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = col; ctx.textAlign = "left";
+    ctx.fillText(label, 45, 31);
+
+    const ms = (plc && plc.scanMs || 0).toFixed(2);
+    const scans = (plc && plc.scans || 0);
+    const txt = "SCAN " + String(scans).padStart(6, "0") + "   " + ms + " ms";
+    ctx.font = "600 13px Consolas,monospace";
+    const w2 = ctx.measureText(txt).width + 26;
+    ctx.fillStyle = "rgba(8,14,24,.84)";
+    rr(ctx, W - 16 - w2, 14, w2, 32, 8); ctx.fill();
+    ctx.strokeStyle = "rgba(74,158,255,.35)"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = "#7fd1ff"; ctx.textAlign = "right";
+    ctx.fillText(txt, W - 29, 31);
+    ctx.restore();
   },
 
   bg(ctx) {
@@ -55,6 +99,10 @@ const Scenes = {
     g.addColorStop(0.55, "#0b1220");
     g.addColorStop(1, "#070c15");
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const sp = ctx.createRadialGradient(W * 0.5, H * 0.12, 12, W * 0.5, H * 0.2, W * 0.6);
+    sp.addColorStop(0, "rgba(120,170,255,0.10)");
+    sp.addColorStop(1, "rgba(120,170,255,0)");
+    ctx.fillStyle = sp; ctx.fillRect(0, 0, W, H * 0.72);
     const fg = ctx.createLinearGradient(0, H * 0.62, 0, H);
     fg.addColorStop(0, "#141d2e"); fg.addColorStop(1, "#0a111c");
     ctx.fillStyle = fg; ctx.fillRect(0, H * 0.62, W, H * 0.38);

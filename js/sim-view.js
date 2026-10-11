@@ -445,39 +445,93 @@
   
 
   /* ------------------------------ osiloskop --------------------------- */
+  function niceStep(x) {
+    if (!(x > 0)) return 1;
+    const e = Math.pow(10, Math.floor(Math.log10(x)));
+    const m = x / e;
+    return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7.5 ? 5 : 10) * e;
+  }
+  function fmtTime(ms) {
+    if (ms >= 1) return ms.toFixed(ms < 10 ? 2 : 1) + " ms";
+    if (ms >= 0.001) return (ms * 1000).toFixed(ms * 1000 < 10 ? 2 : 1) + " \u00b5s";
+    return (ms * 1e6).toFixed(0) + " ns";
+  }
   function drawScope(canvas, sim, frame) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const W = canvas.width, H = canvas.height, pad = 26;
+    const W = canvas.width, H = canvas.height;
+    const L = 34, R = 10, T = 16, B = 18;
+    const gx = W - L - R, gy = H - T - B;
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#0b0f16"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#16202f"; ctx.lineWidth = 1;
-    for (let x = pad; x <= W - pad; x += (W - 2 * pad) / 8) { ctx.beginPath(); ctx.moveTo(x, pad); ctx.lineTo(x, H - pad); ctx.stroke(); }
-    for (let y = pad; y <= H - pad; y += (H - 2 * pad) / 4) { ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(W - pad, y); ctx.stroke(); }
-    if (!sim || sim.mode !== "tran" || !sim.probes || !sim.probes.length) {
-      ctx.fillStyle = "#5f7a99"; ctx.font = "13px Segoe UI"; ctx.textAlign = "center";
-      ctx.fillText("Bu devre için dalga yok", W / 2, H / 2);
+    ctx.fillStyle = "#0a0e15"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#141e2d"; ctx.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) { const x = L + gx * i / 10; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + gy); ctx.stroke(); }
+    for (let j = 0; j <= 8; j++) { const y = T + gy * j / 8; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + gx, y); ctx.stroke(); }
+    ctx.strokeStyle = "#22344f";
+    ctx.beginPath(); ctx.moveTo(L, T + gy / 2); ctx.lineTo(L + gx, T + gy / 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(L + gx / 2, T); ctx.lineTo(L + gx / 2, T + gy); ctx.stroke();
+
+    if (!sim || !sim.probes || !sim.probes.length || sim.mode !== "tran") {
+      ctx.fillStyle = "#5f7a99"; ctx.font = "13px 'Segoe UI'"; ctx.textAlign = "center";
+      ctx.fillText(sim && sim.mode === "ac" ? "AC analizi bu devrede" : "Bu devre için dalga yok", W / 2, H / 2); { const ro = document.getElementById("scope-readout"); if (ro) ro.innerHTML = ""; }
       return;
     }
     const nets = sim.probes;
-    let maxV = 1e-3;
-    for (const f of sim.frames) for (const n of nets) maxV = Math.max(maxV, Math.abs(f.V[n] || 0));
-    maxV = Math.ceil(maxV);
-    const xOf = (t) => pad + (t / sim.tEnd) * (W - 2 * pad);
-    const yOf = (v) => H - pad - (v / (maxV * 1.1) + 0.5) * (H - 2 * pad);
-    ctx.strokeStyle = "#33465f"; ctx.beginPath(); ctx.moveTo(pad, yOf(0)); ctx.lineTo(W - pad, yOf(0)); ctx.stroke();
+    const N = sim.frames.length;
+    const fullSpan = sim.tEnd || (sim.frames[N - 1] && sim.frames[N - 1].t) || 1;
+    const view = Math.max(0.06, Math.min(1, simView.scopeView || 1));
+    const span = Math.max(fullSpan * view, 1e-12);
+    const curT = frame ? frame.t : sim.frames[N - 1].t;
+    let t0 = curT - span * 0.9;
+    t0 = Math.max(0, Math.min(t0, Math.max(0, fullSpan - span)));
+    const t1 = t0 + span;
+    const xOf = t => L + gx * (t - t0) / span;
+
+    let mx = 0, i0 = -1, i1 = -1;
+    for (let i = 0; i < N; i++) {
+      const t = sim.frames[i].t;
+      if (t < t0 || t > t1) continue;
+      if (i0 < 0) i0 = i;
+      i1 = i;
+      for (const n of nets) { const v = Math.abs(sim.frames[i].V[n] || 0); if (v > mx) mx = v; }
+    }
+    if (i0 < 0) { i0 = N - 1; i1 = N - 1; }
+    const vdiv = niceStep(Math.max(mx, 1e-6) / 4);
+    const yOf = v => T + gy / 2 - (v / (vdiv * 4)) * (gy / 2);
+
     for (const n of nets) {
-      ctx.strokeStyle = netColor(n); ctx.lineWidth = 2; ctx.beginPath();
-      sim.frames.forEach((f, i) => { const x = xOf(f.t), y = yOf(f.V[n] || 0); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
-      ctx.stroke();
+      ctx.strokeStyle = netColor(n); ctx.lineWidth = 1.8; ctx.shadowColor = netColor(n); ctx.shadowBlur = 4;
+      ctx.beginPath();
+      for (let i = i0; i <= i1; i++) {
+        const t = sim.frames[i].t, v = sim.frames[i].V[n] || 0;
+        const x = xOf(t), y = yOf(v);
+        i === i0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke(); ctx.shadowBlur = 0;
     }
-    if (frame) {
-      ctx.strokeStyle = "#e0342c"; ctx.lineWidth = 1.5; ctx.beginPath();
-      const cx = xOf(frame.t); ctx.moveTo(cx, pad); ctx.lineTo(cx, H - pad); ctx.stroke();
+    if (curT >= t0 && curT <= t1) {
+      ctx.strokeStyle = "#e0342c"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(xOf(curT), T); ctx.lineTo(xOf(curT), T + gy); ctx.stroke(); ctx.setLineDash([]);
     }
-    ctx.font = "12px Segoe UI"; ctx.textAlign = "left";
-    nets.forEach((n, i) => { ctx.fillStyle = netColor(n); ctx.fillText("● " + n + " (" + (frame ? (frame.V[n] || 0).toFixed(2) : "0") + "V)", pad + 6 + i * 110, pad - 8); });
-    ctx.fillStyle = "#5f7a99"; ctx.fillText("↑ " + maxV + "V / tam ölçek", pad + 6, H - 6);
+    const c0 = nets[0], vals = [];
+    for (let i = i0; i <= i1; i++) vals.push(sim.frames[i].V[c0] || 0);
+    let vmax = -1e9, vmin = 1e9, cross = 0;
+    for (let i = 0; i < vals.length; i++) { if (vals[i] > vmax) vmax = vals[i]; if (vals[i] < vmin) vmin = vals[i]; if (i && (vals[i - 1] < 0) !== (vals[i] < 0)) cross++; }
+    const vpp = vmax - vmin, vavg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+    const freq = cross / 2 / span / 1000;
+
+    ctx.font = "11px Consolas,monospace"; ctx.textAlign = "left";
+    nets.forEach((n, i) => {
+      ctx.fillStyle = netColor(n);
+      ctx.fillText("\u25cf" + n + " " + (frame ? (frame.V[n] || 0).toFixed(2) : "0") + "V", L + 4 + i * 96, T - 5);
+    });
+    ctx.fillStyle = "#7f9bbf"; ctx.textAlign = "right";
+    ctx.fillText("V/div " + (vdiv >= 1 ? vdiv.toFixed(1) : vdiv.toPrecision(2)), W - R, T - 5);
+    const ro = document.getElementById("scope-readout");
+    if (ro) {
+      ro.innerHTML = "t/div <b>" + fmtTime(span / 10) + "</b> \u00b7 Vpp <b>" + vpp.toFixed(2) + "V</b> \u00b7 Ort <b>" + vavg.toFixed(2) + "V</b>" +
+        (freq > 1 ? " \u00b7 f\u2248<b>" + (freq >= 1000 ? (freq / 1000).toFixed(2) + " kHz" : freq.toFixed(1) + " Hz") + "</b>" : "");
+    }
   }
 
   /* ------------------------------ animasyon --------------------------- */
@@ -1088,7 +1142,7 @@
           '<span class="sim-spacer"></span>' +
           '<button class="sim-btn" id="sim-undo" title="Geri al (Ctrl+Z)">\u21b6</button>' +
           '<button class="sim-btn" id="sim-redo" title="Yinele (Ctrl+Y)">\u21b7</button>' +
-          '<button class="sim-btn primary" id="sim-reset" title="Sıfırla">\u21ba Sıfırla</button>' +
+          '<button class="sim-btn primary" id="sim-reset" title="Sıfırla">\u21ba Sıfırla</button>' + '<button class="sim-btn" id="sim-save" title="Devreyi kaydet">Kaydet</button>' + '<button class="sim-btn" id="sim-load" title="Kaydedilen devreyi yükle">Yükle</button>' +
         '</header>' +
         '<div class="sim-palette" id="sim-palette">' +
           Object.keys(PART_DEFS).map(t => '<button class="sim-chip" data-add="' + t + '">' + PART_DEFS[t].label + '</button>').join("") +
@@ -1131,7 +1185,7 @@
             '</div>' +
             '<div class="sim-panel">' +
               '<h3>Osiloskop</h3>' +
-              '<canvas id="scope-canvas" width="360" height="180"></canvas>' +
+              '<canvas id="scope-canvas" width="360" height="180"></canvas>' + '<div class="scope-ctl"><label>Zaman/div <select id="scope-tdiv"><option value="1">1\u00d7</option><option value="0.5">0.5\u00d7</option><option value="0.25">0.25\u00d7</option><option value="0.1">0.1\u00d7</option></select></label><span class="scope-readout" id="scope-readout"></span></div>' +
             '</div>' +
             '<p class="sim-desc" id="sim-desc"></p>' +
           '</aside>' +
@@ -1156,9 +1210,11 @@
       simView.playing = !simView.playing;
       $("sim-play").textContent = simView.playing ? "⏸" : "▶";
     };
-    $("sim-speed").oninput = e => { simView.speed = +e.target.value; };
+    $("sim-speed").oninput = e => { simView.speed = +e.target.value; }; $("scope-tdiv").onchange = e => { simView.scopeView = +e.target.value; };
     $("sim-progress").oninput = e => { simView.playing = false; $("sim-play").textContent = "▶"; simView.frame = +e.target.value; };
     $("sim-reset").onclick = () => { simView.values = {}; selectCircuit(simView.src ? simView.src.id : simView.circ.id); };
+    $("sim-save").onclick = saveCircuit;
+    $("sim-load").onclick = loadCircuit;
     $("sim-undo").onclick = doUndo;
     $("sim-redo").onclick = doRedo;
 
@@ -1240,6 +1296,7 @@
     window.addEventListener("keydown", onDragKey);
 
     const want = (location.hash.split("/")[1]) || (simView.circ ? simView.circ.id : SimEngine.circuits[0].id);
+    if (simView.scopeView == null) simView.scopeView = 1;
     selectCircuit(want);
     cancelAnimationFrame(simView.raf);
     simView.lastT = 0;
@@ -1292,6 +1349,47 @@
     const ex = document.getElementById("exam-check"); if (ex) ex.disabled = true;
     const res = document.getElementById("sim-result"); if (res) { res.className = "sim-result"; res.innerHTML = ""; }
     renderTarget(); renderInstrument(); commit(false);
+  }
+
+  function flashSim(msg) {
+    let el = document.getElementById("sim-toast");
+    if (!el) { el = document.createElement("div"); el.id = "sim-toast"; el.className = "sim-toast"; document.body.appendChild(el); }
+    el.textContent = msg; el.classList.add("show");
+    clearTimeout(simView._toastT);
+    simView._toastT = setTimeout(() => el.classList.remove("show"), 1600);
+  }
+
+  function saveCircuit() {
+    if (!simView.circ) return;
+    try {
+      localStorage.setItem("ea_sim_circ", JSON.stringify({ circ: simView.circ, values: simView.values, ts: Date.now() }));
+      flashSim("Devre kaydedildi");
+    } catch (e) { flashSim("Kaydedilemedi"); }
+  }
+
+  function loadCircuit() {
+    try {
+      const raw = localStorage.getItem("ea_sim_circ");
+      if (!raw) { flashSim("Kayıt yok"); return; }
+      const data = JSON.parse(raw);
+      if (!data || !data.circ || !Array.isArray(data.circ.parts)) { flashSim("Kayıt bozuk"); return; }
+      cancelInlineEdit();
+      exercise = null; lastCheck = null;
+      simView.circ = data.circ;
+      simView.src = SimEngine.circuits.find(x => x.id === data.circ.id) ||
+        { id: data.circ.id, name: data.circ.name || "Kayıt", analysis: data.circ.analysis || "dc", parts: [], probes: [], knobs: [] };
+      simView.values = data.values || {};
+      simView.frame = 0; simView.selPart = null; simView.probeA = null; simView.probeB = null;
+      simView.heatMap = {}; particles.length = 0;
+      wireStart = null; wireCursor = null;
+      hist.undo.length = 0; hist.redo.length = 0;
+      const d = document.getElementById("sim-desc");
+      if (d) d.innerHTML = '<b>' + (data.circ.name || "Kayıt") + '</b> — yüklenen devre';
+      const ex = document.getElementById("exam-check"); if (ex) ex.disabled = true;
+      const res = document.getElementById("sim-result"); if (res) { res.className = "sim-result"; res.innerHTML = ""; }
+      renderTarget(); renderInstrument(); commit(false);
+      flashSim("Devre yüklendi");
+    } catch (e) { flashSim("Yüklenemedi"); }
   }
 
   function startExercise(id) {

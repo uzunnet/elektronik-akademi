@@ -376,6 +376,11 @@ table.tbl tr:nth-child(even) td{background:rgba(255,255,255,.02)}
 .meter-hint{font-size:12.5px;color:var(--muted);font-family:"Segoe UI",sans-serif}
 .meter-part{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13px;color:#cdd9e8}
 #scope-canvas{width:100%;height:auto;border-radius:10px;display:block}
+.scope-ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.scope-ctl label{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.scope-ctl select{background:var(--bg3);color:var(--txt);border:1px solid var(--line2);border-radius:6px;padding:3px 6px;font-family:Consolas,monospace;font-size:12px}
+.scope-readout{margin-left:auto;font-family:Consolas,monospace;font-size:11px;color:#7f9bbf}
+.scope-readout b{color:#7fe0ff}
 .sim-desc{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
 .sim-desc b{color:#dbe6f2}
 .wire{stroke:#7a93b0;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
@@ -523,6 +528,8 @@ body.dragging .part:hover{filter:none}
 .hmi-scan b{font-size:16px;color:#7fe0ff;text-shadow:0 0 10px rgba(70,200,255,.7)}
 .plc-toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,16px);background:#12243a;border:1px solid #2b6fb0;color:#cfe4ff;padding:9px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.22s;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.5)}
 .plc-toast.show{opacity:1;transform:translate(-50%,0)}
+.sim-toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,16px);background:#12243a;border:1px solid #2b6fb0;color:#cfe4ff;padding:9px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.22s;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.sim-toast.show{opacity:1;transform:translate(-50%,0)}
 
 /* ladder */
 .plc-ladder{background:linear-gradient(180deg,#0c1320,#0a1019);border:1px solid var(--line);border-radius:10px;padding:12px 14px;overflow-x:auto;min-height:180px}

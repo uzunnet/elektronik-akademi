@@ -378,11 +378,11 @@ table.tbl tr:nth-child(even) td{background:rgba(255,255,255,.02)}
 #scope-canvas{width:100%;height:auto;border-radius:10px;display:block}
 .sim-desc{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
 .sim-desc b{color:#dbe6f2}
-.wire{stroke:#90a6bf;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wire{stroke:#7a93b0;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .part{transition:none;cursor:grab}
-.part:hover{filter:drop-shadow(0 0 4px #43d9ff)}
-.part.selected{filter:drop-shadow(0 0 5px #43d9ff)}
-.part.selected line,.part.selected polygon,.part.selected path{stroke:#43d9ff}
+.part:hover{filter:drop-shadow(0 0 6px #4a9eff) drop-shadow(0 0 12px rgba(74,158,255,.3))}
+.part.selected{filter:drop-shadow(0 0 6px #4a9eff) drop-shadow(0 0 14px rgba(74,158,255,.4))}
+.part.selected line,.part.selected polygon,.part.selected path{stroke:#4a9eff}
 body.dragging{cursor:grabbing;user-select:none}
 body.dragging .part{cursor:grabbing}
 body.dragging .part:hover{filter:none}

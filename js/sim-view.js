@@ -12,15 +12,17 @@
   const netColor = (n) => NET_COLOR[n] || "#c9a227";
 
   const C = {
-    lead: "#8aa1ba",      // tel / pin ucu
-    dev:  "#dbe6f3",      // sembol gövdesi
-    fill: "#0e1622",      // sembol iç dolgu
-    grid: "#1b2740",      // ızgara
-    grid2: "#141d2e",
-    gnd:  "#7d93ad",
-    hi:   "#43d9ff",      // vurgu
-    led:  "#e0342c",
-    zen:  "#9a9cd0"
+    lead: "#7a93b0",      // tel / pin ucu
+    dev:  "#e8f0fa",      // sembol gövdesi
+    fill: "#0d1420",      // sembol iç dolgu
+    grid: "#1e3050",      // ızgara
+    grid2: "#16203a",
+    gnd:  "#8a9fba",
+    hi:   "#4a9eff",      // vurgu
+    led:  "#ff4030",
+    zen:  "#a8a8e0",
+    bat:  "#22c55e",
+    vc:   "#f59e0b"
   };
 
   const simView = {
@@ -193,11 +195,25 @@
       if (isLED) s += circleEl(cx, cy, 26, { class: "led-glow", "data-led": p.id, fill: C.led, opacity: 0 });
     }
     else if (t === "V") {
-      const R = 16;
-      if (hz) s = L(x1, y1, cx - R, cy) + L(cx + R, cy, x2, y2); else s = L(x1, y1, cx, cy - R) + L(cx, cy + R, x2, y2);
-      s += circleEl(cx, cy, R, { fill: C.fill, stroke: C.dev, "stroke-width": 2 });
-      s += txt(cx, cy - 3, "+", "sym-sign", { fill: "#2cc6a0", "text-anchor": "middle" });
-      s += txt(cx, cy + 12, "−", "sym-sign", { fill: "#e5534b", "text-anchor": "middle" });
+      if (hz) {
+        const bw = 14, bh = 22;
+        s = L(x1, y1, cx - bw, cy) + L(cx + bw, cy, x2, y2);
+        s += dev(cx, cy - bh, cx, cy + bh, 3);
+        s += dev(cx - 8, cy - bh + 5, cx + 8, cy - bh + 5, 2);
+        s += dev(cx - 8, cy + bh - 5, cx + 8, cy + bh - 5, 2);
+        s += circleEl(cx, cy, 14, { fill: "none", stroke: C.hi, "stroke-width": 1, opacity: 0.3 });
+        s += txt(cx, cy - 6, "+", "sym-sign", { fill: C.bat, "text-anchor": "middle", "font-size": "10" });
+        s += txt(cx, cy + 12, "−", "sym-sign", { fill: C.led, "text-anchor": "middle", "font-size": "10" });
+      } else {
+        const bw = 14, bh = 22;
+        s = L(x1, y1, cx, cy - bh) + L(cx, cy + bh, x2, y2);
+        s += dev(cx - bh, cy, cx + bh, cy, 3);
+        s += dev(cx - bh + 5, cy - 8, cx - bh + 5, cy + 8, 2);
+        s += dev(cx + bh - 5, cy - 8, cx + bh - 5, cy + 8, 2);
+        s += circleEl(cx, cy, 14, { fill: "none", stroke: C.hi, "stroke-width": 1, opacity: 0.3 });
+        s += txt(cx - 8, cy + 3, "+", "sym-sign", { fill: C.bat, "text-anchor": "middle", "font-size": "10" });
+        s += txt(cx + 12, cy + 3, "−", "sym-sign", { fill: C.led, "text-anchor": "middle", "font-size": "10" });
+      }
     }
     else if (t === "VSIN") {
       const R = 16;
@@ -301,15 +317,23 @@
 
     let out = `<svg id="${id || "sim-svg"}" viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg">`;
     out += `<defs>
+      <radialGradient id="bg-grad" cx="50%" cy="50%" r="70%">
+        <stop offset="0%" stop-color="#111c30"/>
+        <stop offset="100%" stop-color="#0a0f18"/>
+      </radialGradient>
       <pattern id="sgrid" width="20" height="20" patternUnits="userSpaceOnUse">
-        <circle cx="10" cy="10" r="1" fill="${C.grid}"/>
+        <circle cx="10" cy="10" r="0.8" fill="${C.grid}"/>
       </pattern>
       <pattern id="sgrid2" width="100" height="100" patternUnits="userSpaceOnUse">
         <rect width="100" height="100" fill="url(#sgrid)"/>
-        <path d="M 100 0 L 0 0 0 100" fill="none" stroke="${C.grid2}" stroke-width="1"/>
+        <path d="M 100 0 L 0 0 0 100" fill="none" stroke="${C.grid2}" stroke-width="0.5"/>
       </pattern>
+      <filter id="glow-sel">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
     </defs>`;
-    out += `<rect width="${VW}" height="${VH}" fill="#0b0f16"/>`;
+    out += `<rect width="${VW}" height="${VH}" fill="url(#bg-grad)"/>`;
     out += `<rect width="${VW}" height="${VH}" fill="url(#sgrid2)"/>`;
 
     out += circ.parts.map(p => drawPart(p, p.id === simView.selPart)).join("");

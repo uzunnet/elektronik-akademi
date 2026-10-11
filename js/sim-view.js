@@ -471,9 +471,10 @@
     ctx.beginPath(); ctx.moveTo(L, T + gy / 2); ctx.lineTo(L + gx, T + gy / 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(L + gx / 2, T); ctx.lineTo(L + gx / 2, T + gy); ctx.stroke();
 
+    if (sim && sim.mode === "ac" && sim.freqs && sim.freqs.length) { drawBode(ctx, W, H, L, R, T, B, gx, gy, sim); return; }
     if (!sim || !sim.probes || !sim.probes.length || sim.mode !== "tran") {
       ctx.fillStyle = "#5f7a99"; ctx.font = "13px 'Segoe UI'"; ctx.textAlign = "center";
-      ctx.fillText(sim && sim.mode === "ac" ? "AC analizi bu devrede" : "Bu devre için dalga yok", W / 2, H / 2); { const ro = document.getElementById("scope-readout"); if (ro) ro.innerHTML = ""; }
+      ctx.fillText("Bu devre için dalga yok", W / 2, H / 2); { const ro = document.getElementById("scope-readout"); if (ro) ro.innerHTML = ""; }
       return;
     }
     const nets = sim.probes;
@@ -531,6 +532,43 @@
     if (ro) {
       ro.innerHTML = "t/div <b>" + fmtTime(span / 10) + "</b> \u00b7 Vpp <b>" + vpp.toFixed(2) + "V</b> \u00b7 Ort <b>" + vavg.toFixed(2) + "V</b>" +
         (freq > 1 ? " \u00b7 f\u2248<b>" + (freq >= 1000 ? (freq / 1000).toFixed(2) + " kHz" : freq.toFixed(1) + " Hz") + "</b>" : "");
+    }
+  }
+
+  function drawBode(ctx, W, H, L, R, T, B, gx, gy, sim) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#0a0e15"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#141e2d"; ctx.lineWidth = 1;
+    for (let i = 0; i <= 10; i++) { const x = L + gx * i / 10; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + gy); ctx.stroke(); }
+    for (let j = 0; j <= 8; j++) { const y = T + gy * j / 8; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + gx, y); ctx.stroke(); }
+    const fr = sim.freqs, mag = sim.mag, ph = sim.phase;
+    const f0 = fr[0], f1 = fr[fr.length - 1];
+    const lg = Math.log10(f1) - Math.log10(f0) || 1;
+    const lx = f => L + gx * (Math.log10(f) - Math.log10(f0)) / lg;
+    let mmin = 1e9, mmax = -1e9;
+    for (const m of mag) { if (m > mmax) mmax = m; if (m < mmin) mmin = m; }
+    mmax = Math.ceil(mmax / 10) * 10; mmin = Math.floor(mmin / 10) * 10;
+    if (mmax - mmin < 20) { mmax = mmin + 20; }
+    const yM = m => T + gy * (1 - (m - mmin) / (mmax - mmin));
+    const yP = p => T + gy * (1 - (p + 180) / 360);
+    ctx.strokeStyle = "#a855f7"; ctx.lineWidth = 1.1; ctx.beginPath();
+    ph.forEach((p, i) => { const x = lx(fr[i]), y = yP(p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke();
+    ctx.strokeStyle = "#4a9eff"; ctx.lineWidth = 1.8; ctx.shadowColor = "#4a9eff"; ctx.shadowBlur = 4; ctx.beginPath();
+    mag.forEach((m, i) => { const x = lx(fr[i]), y = yM(m); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(224,52,44,.7)"; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(L, yM(mmax - 3)); ctx.lineTo(L + gx, yM(mmax - 3)); ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = "9px Consolas,monospace"; ctx.fillStyle = "#7f9bbf"; ctx.textAlign = "center";
+    for (let d = Math.ceil(Math.log10(f0)); d <= Math.floor(Math.log10(f1)); d++) {
+      const f = Math.pow(10, d);
+      ctx.fillText(f >= 1e3 ? (f / 1e3) + "k" : f >= 1e6 ? (f / 1e6) + "M" : String(f), lx(f), H - 5);
+    }
+    ctx.textAlign = "left"; ctx.fillStyle = "#4a9eff"; ctx.fillText("|H| dB", L + 3, T - 5);
+    ctx.fillStyle = "#a855f7"; ctx.textAlign = "right"; ctx.fillText("faz °", W - R, T - 5);
+    const ro = document.getElementById("scope-readout");
+    if (ro) {
+      let fc = null;
+      for (let i = 1; i < mag.length; i++) if ((mag[i - 1] >= mmax - 3) !== (mag[i] >= mmax - 3)) { fc = fr[i]; break; }
+      ro.innerHTML = "Bode |H| <b>" + mag[mag.length - 1].toFixed(1) + " dB</b>" +
+        (fc != null ? " · f\u208b\u2083dB <b>" + (fc >= 1000 ? (fc / 1000).toFixed(2) + " kHz" : fc.toFixed(0) + " Hz") + "</b>" : "");
     }
   }
 

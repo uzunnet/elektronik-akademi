@@ -1,0 +1,632 @@
+[
+ {
+  "key": "resistor",
+  "file": "resistor.jpg",
+  "artist": "Evan-Amos",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Electronic_Axial_Lead_Resistors_47kOhm.jpg"
+ },
+ {
+  "key": "capacitor",
+  "file": "capacitor.jpg",
+  "artist": "Retired electrician",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Soviet_ceramic_disc_capacitors_01.jpg"
+ },
+ {
+  "key": "elec-cap",
+  "file": "elec-cap.jpg",
+  "artist": "Elcap",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Electrolytic_capacitors-P1090328.JPG"
+ },
+ {
+  "key": "inductor",
+  "file": "inductor.jpg",
+  "artist": "Miguel",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Electronic_component_inductors.jpg"
+ },
+ {
+  "key": "transformer",
+  "file": "transformer.jpg",
+  "artist": "Hannes Grobe",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Transformer-03_hg.jpg"
+ },
+ {
+  "key": "diode",
+  "file": "diode.jpg",
+  "artist": "RJB1",
+  "license": "CC BY 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Double_diodes_AZ1_PL.jpg"
+ },
+ {
+  "key": "zener",
+  "file": "zener.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:1N829_Zener_Diode.jpg"
+ },
+ {
+  "key": "led",
+  "file": "led.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:LED_5mm_RGB.jpg"
+ },
+ {
+  "key": "bjt",
+  "file": "bjt.jpg",
+  "artist": "MakeMagazinDE",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:To-92_footprint.jpg"
+ },
+ {
+  "key": "mosfet",
+  "file": "mosfet.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:MOSFET_transistors.jpg"
+ },
+ {
+  "key": "opamp",
+  "file": "opamp.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Operational_Amplifier_%C2%B5A709CT.jpg"
+ },
+ {
+  "key": "reg7805",
+  "file": "reg7805.jpg",
+  "artist": "Retired electrician",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:7809_(OnSemi)_02.jpg"
+ },
+ {
+  "key": "ic-dip",
+  "file": "ic-dip.jpg",
+  "artist": "Nixdorf",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Chip_pins.JPG"
+ },
+ {
+  "key": "crystal",
+  "file": "crystal.jpg",
+  "artist": "(copied from en.wikipedia) — Omegatron 18:24, 4 June 2006 (UTC)",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Crystal_oscillator_4MHz.jpg"
+ },
+ {
+  "key": "fuse",
+  "file": "fuse.jpg",
+  "artist": "155LA3",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:%D0%A1%D0%9D-1,0_%D0%BF%D1%80%D0%B5%D0%B4%D0%BE%D1%85%D1%80%D0%B0%D0%BD%D0%B8%D1%82%D0%B5%D0%BB%D1%8C-%D0%B2%D1%81%D1%82%D0%B0%D0%B2%D0%BA%D0%B0_%D1%81%D0%BF%D0%B8%D1%80%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9_(02).jpg"
+ },
+ {
+  "key": "pot",
+  "file": "pot.png",
+  "artist": "Junkyardsparkle",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Bourns_TRIMIT_trimming_potentiometer_transparent.png"
+ },
+ {
+  "key": "varistor",
+  "file": "varistor.jpg",
+  "artist": "Michael Schmid",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Varistor_S14K385_photo.jpg"
+ },
+ {
+  "key": "thermistor",
+  "file": "thermistor.jpg",
+  "artist": "Soumyapatra13",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:NTC_Thermistor.jpg"
+ },
+ {
+  "key": "scr",
+  "file": "scr.jpg",
+  "artist": "Glenn",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:60857_RCA_silicon_thyristor.jpg"
+ },
+ {
+  "key": "igbt",
+  "file": "igbt.jpg",
+  "artist": "Daniel*D",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:IGBT_2441.JPG"
+ },
+ {
+  "key": "bridge",
+  "file": "bridge.jpg",
+  "artist": "Retired electrician",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:GBL04_diode_bridge.jpg"
+ },
+ {
+  "key": "switch",
+  "file": "switch.jpg",
+  "artist": "Santeri Viinamäki",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:White_light_switch.jpg"
+ },
+ {
+  "key": "buzzer",
+  "file": "buzzer.jpg",
+  "artist": "Raimond Spekking",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Ideenwelt_EM2862_-_Piezoelectric_buzzer-91799.jpg"
+ },
+ {
+  "key": "speaker",
+  "file": "speaker.png",
+  "artist": "Unknown authorUnknown author",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Magnavox_horn_loudspeaker.png"
+ },
+ {
+  "key": "breadboard",
+  "file": "breadboard.jpg",
+  "artist": "oomlout",
+  "license": "CC BY-SA 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:400_points_breadboard.jpg"
+ },
+ {
+  "key": "multimeter",
+  "file": "multimeter.jpg",
+  "artist": "Jacek Halicki",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:2017_Cyfrowy_miernik_uniwersalny.jpg"
+ },
+ {
+  "key": "oscilloscope",
+  "file": "oscilloscope.jpg",
+  "artist": "File:Tektronix TPS 2014B cropped.jpg: * File:Tektronix TPS 2014B.jpg: Marcin Łukasz Kiejzik derivative work: TeKaBe File:Tektronix Oscilloscope 475A.jpg: Pittigrilli derivative work: Pittigrilli",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Analog_CRT_oscilloscope_Tektronix_475A_(1977)_and_digital_storage_oscilloscope_Tektronix_TPS_2014B_(c._2012).jpg"
+ },
+ {
+  "key": "solder",
+  "file": "solder.jpg",
+  "artist": "Suyash Dwivedi ",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Soldering_Iron_Stand_made_with_China_clay_-2_(cropped).jpg"
+ },
+ {
+  "key": "battery",
+  "file": "battery.jpg",
+  "artist": "Gpkp",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:8F22_9V_Transistor_radio_battery_(2026).jpg"
+ },
+ {
+  "key": "pcb",
+  "file": "pcb.jpg",
+  "artist": "gunthercox",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Green_Printed_Circuit_Board_and_Components.JPG"
+ },
+ {
+  "key": "photodiode",
+  "file": "photodiode.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:DF1_Germanium_photodiode.jpg"
+ },
+ {
+  "key": "mcu",
+  "file": "mcu.png",
+  "artist": "Gareth Halfacree from Bradford, UK",
+  "license": "CC BY-SA 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Proto-Pic_Program-o-Tron_(45330259082).png"
+ },
+ {
+  "key": "pushbutton",
+  "file": "pushbutton.jpg",
+  "artist": "Raimond Spekking",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Apple_Magic_Trackpad_-_tactile_push_button-4258.jpg"
+ },
+ {
+  "key": "schottky",
+  "file": "schottky.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:HP_5082-2800.jpg"
+ },
+ {
+  "key": "film-cap",
+  "file": "film-cap.jpg",
+  "artist": "Retired electrician",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Epcos_boxed_film_capacitor_03.jpg"
+ },
+ {
+  "key": "tantalum",
+  "file": "tantalum.jpg",
+  "artist": "Elcap, Jens Both",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Tantal-P1100196c.jpg"
+ },
+ {
+  "key": "smd-resistor",
+  "file": "smd-resistor.jpg",
+  "artist": "Aisart",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Soldering_a_0805.jpg"
+ },
+ {
+  "key": "smd-cap",
+  "file": "smd-cap.jpg",
+  "artist": "Crispin Semmens",
+  "license": "CC BY-SA 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Surface_mounted_capacitors_(1569347431).jpg"
+ },
+ {
+  "key": "trim-pot",
+  "file": "trim-pot.jpg",
+  "artist": "TubeTimeUS",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:15-turn_trimmer_potentiometer_cross_section.jpg"
+ },
+ {
+  "key": "dip-switch",
+  "file": "dip-switch.jpg",
+  "artist": "Raimond Spekking",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Nedap_ESD1_-_printer_controller_-_DIP_switch_-_all_off-91979.jpg"
+ },
+ {
+  "key": "reed-relay",
+  "file": "reed-relay.png",
+  "artist": "TubeTimeUS",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Cross_section_of_a_reed_relay.png"
+ },
+ {
+  "key": "ssr",
+  "file": "ssr.png",
+  "artist": "Jason Demicoli",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:CarloGavazzi_Solid_State_Relay.png"
+ },
+ {
+  "key": "tl431",
+  "file": "tl431.png",
+  "artist": "Retired electrician",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Tl431_abs_temp_chart_ENG.png"
+ },
+ {
+  "key": "ne555",
+  "file": "ne555.jpg",
+  "artist": "Swift.Hg",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:NE555_DIP_%26_SOIC.jpg"
+ },
+ {
+  "key": "shiftreg",
+  "file": "shiftreg.jpg",
+  "artist": "Towel401 at English Wikipedia",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:74HC595.jpg"
+ },
+ {
+  "key": "arduino",
+  "file": "arduino.jpg",
+  "artist": "SparkFun Electronics from Boulder, USA",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Arduino_Uno_-_R3.jpg"
+ },
+ {
+  "key": "esp32",
+  "file": "esp32.jpg",
+  "artist": "Edwiyanto",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:ESP32_Dev_Board.jpg"
+ },
+ {
+  "key": "stm32",
+  "file": "stm32.jpg",
+  "artist": "Avandalen",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Nucleo-board.jpg"
+ },
+ {
+  "key": "rpi",
+  "file": "rpi.jpg",
+  "artist": "Laserlicht",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Raspberry_Pi_4_Model_B_-_Side.jpg"
+ },
+ {
+  "key": "sevenseg",
+  "file": "sevenseg.jpg",
+  "artist": "R36",
+  "license": "CC BY 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Penn_Station_Clock_Vane_Display.jpg"
+ },
+ {
+  "key": "connector",
+  "file": "connector.jpg",
+  "artist": "Soft-alloy",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Raspberry_pi_pico_devboard_with_exposed_female_pin_header_internals.jpg"
+ },
+ {
+  "key": "usbconn",
+  "file": "usbconn.jpg",
+  "artist": "Logant547",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Two_USB-C_connectors_being_held.jpg"
+ },
+ {
+  "key": "dcjack",
+  "file": "dcjack.jpg",
+  "artist": "Siarhei Besarab",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Lenovo_ThinkPad_X220_power_jack_cable_with_7.5x5.5_mm_connector.jpg"
+ },
+ {
+  "key": "motor",
+  "file": "motor.jpg",
+  "artist": "Jjmontero9",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Small_DC_Motor_Rotor.JPG"
+ },
+ {
+  "key": "servo",
+  "file": "servo.jpg",
+  "artist": "Projuktiponno",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Yeskawa_Servo_Drive_%26_Motor.jpg"
+ },
+ {
+  "key": "stepper",
+  "file": "stepper.jpg",
+  "artist": "DotEagle",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Arduino_UNO_compatible_board,_CNC_shield_stepper_motor_controller,_and_a_NEMA_17_stepper_motor.jpg"
+ },
+ {
+  "key": "fan",
+  "file": "fan.jpg",
+  "artist": "Jacek Halicki",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:2023_Wentylator_be_quiet!_Silent_Wings_135_mm.jpg"
+ },
+ {
+  "key": "heatsink",
+  "file": "heatsink.jpg",
+  "artist": "Retired electrician",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Aluminium_heatsink,_76x50mm_cross-section_01.jpg"
+ },
+ {
+  "key": "thermalpaste",
+  "file": "thermalpaste.jpg",
+  "artist": "Jacek Halicki",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:2023_Thermal_Grizzly_Kryonaut.jpg"
+ },
+ {
+  "key": "jumper",
+  "file": "jumper.jpg",
+  "artist": "oomlout",
+  "license": "CC BY-SA 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Jumper_Wires_with_Crocodile_Clips.jpg"
+ },
+ {
+  "key": "probe",
+  "file": "probe.jpg",
+  "artist": "Smial (talk)",
+  "license": "FAL",
+  "source": "https://commons.wikimedia.org/wiki/File:Oszilloskop_Tastkopf_10x_IMGP3769_smial_wp.jpg"
+ },
+ {
+  "key": "fungen",
+  "file": "fungen.jpg",
+  "artist": "Anselm Schüler",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Function_Generator_FG100.jpg"
+ },
+ {
+  "key": "hotair",
+  "file": "hotair.png",
+  "artist": "YuriyTer",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Accta_301_Soldering_Station.png"
+ },
+ {
+  "key": "solderwire",
+  "file": "solderwire.jpg",
+  "artist": "R. Henrik Nilsson",
+  "license": "CC BY 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Late_20th_century_Multicore_Ersin_5_core_0_7_mm_solder_wire_by_Multicore_Solders_Ltd_England.jpg"
+ },
+ {
+  "key": "flux",
+  "file": "flux.jpg",
+  "artist": "Aisart",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Soldering_a_0805.jpg"
+ },
+ {
+  "key": "desolder",
+  "file": "desolder.jpg",
+  "artist": "Andy / Andrew Fogg",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Sucker_(for_solder).jpg"
+ },
+ {
+  "key": "tweezers",
+  "file": "tweezers.jpg",
+  "artist": "Krzysztof Popławski",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:8_%C5%9Al%C4%85ski_Festiwal_Nauki,_MCK,_Katowice,,_09.12.2024,_1234.jpg"
+ },
+ {
+  "key": "esdstrap",
+  "file": "esdstrap.jpg",
+  "artist": "Harke",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Antistatic_wrist_strap_(2).jpg"
+ },
+ {
+  "key": "lm35",
+  "file": "lm35.jpg",
+  "artist": "Nevit Dilmen (talk)",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:LM35_temperature_sensor_semiconductor_thermometer_1480374_5_6_HDR_enhancer.jpg"
+ },
+ {
+  "key": "hcsr04",
+  "file": "hcsr04.jpg",
+  "artist": "SparkFun",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:SparkFun_HC-SR04_Ultrasonic-Sensor_13959-01a.jpg"
+ },
+ {
+  "key": "pir",
+  "file": "pir.png",
+  "artist": "Versatile Techno",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:PIR_Motion_Sensor-Sensinova_(SN-PR11).png"
+ },
+ {
+  "key": "mpu6050",
+  "file": "mpu6050.jpg",
+  "artist": "Nevit Dilmen (talk)",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:GY-521_MPU-6050_Module_3_Axis_Gyroscope_%2B_Accelerometer_0487.jpg"
+ },
+ {
+  "key": "solar",
+  "file": "solar.jpg",
+  "artist": "Grendelkhan",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Ground_mounted_solar_panels.gk.jpg"
+ },
+ {
+  "key": "peltier",
+  "file": "peltier.jpg",
+  "artist": "Gerardtv",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Thermoelectric_Seebeck_power_module.jpg"
+ },
+ {
+  "key": "supercap",
+  "file": "supercap.jpg",
+  "artist": "Sechsa",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Supercapacitor_-_ultracapacitor_products_of_SECH_SA.jpg"
+ },
+ {
+  "key": "relaymod",
+  "file": "relaymod.jpg",
+  "artist": "Phiarc",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Washing_machine_power_module_failed_auxiliary_PSU.jpg"
+ },
+ {
+  "key": "optocoupler",
+  "file": "optocoupler.jpg",
+  "artist": "Phiarc",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:MDT_AKD-0424R.02_circuit_board.jpg"
+ },
+ {
+  "key": "buckmodule",
+  "file": "buckmodule.jpg",
+  "artist": "Matthew Berardi",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:LM2596_buck_converter_module,_MP1584_buck_converter_module,_and_SDB628_boost_converter_module.jpg"
+ },
+ {
+  "key": "boostmodule",
+  "file": "boostmodule.jpg",
+  "artist": "Matthew Berardi",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:LM2596_buck_converter_module,_MP1584_buck_converter_module,_and_SDB628_boost_converter_module.jpg"
+ },
+ {
+  "key": "lm317",
+  "file": "lm317.png",
+  "artist": "Emeric MARTINEAU",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Lm317_voltage_regulator.png"
+ },
+ {
+  "key": "lm358",
+  "file": "lm358.jpg",
+  "artist": "Mister rf",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:LM358N.jpg"
+ },
+ {
+  "key": "uln2003",
+  "file": "uln2003.jpg",
+  "artist": "Zeptobars.ru",
+  "license": "CC BY 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:ULN2003_Darlington_Transistor_Array_Micrograph.jpg"
+ },
+ {
+  "key": "arduino-nano",
+  "file": "arduino-nano.jpg",
+  "artist": "David Mellis",
+  "license": "CC BY 2.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Arduino_Nano.jpg"
+ },
+ {
+  "key": "motherboard",
+  "file": "motherboard.jpg",
+  "artist": "Jacek Halicki",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:2023_P%C5%82yta_g%C5%82%C3%B3wna_ASRock_A320M-DVS.jpg"
+ },
+ {
+  "key": "tvboard",
+  "file": "tvboard.jpg",
+  "artist": "Bob Rethemeyer",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:TV_Typewriter_Kit_1.jpg"
+ },
+ {
+  "key": "thermalcam",
+  "file": "thermalcam.jpg",
+  "artist": "Jonathan Clemens (Jclemens (talk))",
+  "license": "CC BY-SA 3.0",
+  "source": "https://commons.wikimedia.org/wiki/File:Thermal_imaging_camera_side.jpg"
+ },
+ {
+  "key": "lcrmeter",
+  "file": "lcrmeter.jpg",
+  "artist": "Retired electrician",
+  "license": "CC0",
+  "source": "https://commons.wikimedia.org/wiki/File:Generic_Chinese_LC-meter,_around_2000_(1).jpg"
+ },
+ {
+  "key": "clampmeter",
+  "file": "clampmeter.jpg",
+  "artist": "Harke",
+  "license": "Public domain",
+  "source": "https://commons.wikimedia.org/wiki/File:Clampmeter_Fluke_337.jpg"
+ },
+ {
+  "key": "tp4056",
+  "file": "tp4056.jpg",
+  "artist": "-stk",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:TP4056_board_P1089956.jpg"
+ },
+ {
+  "key": "esp8266",
+  "file": "esp8266.jpg",
+  "artist": "Vowstar",
+  "license": "CC BY-SA 4.0",
+  "source": "https://commons.wikimedia.org/wiki/File:NodeMCU_DEVKIT_1.0.jpg"
+ }
+]

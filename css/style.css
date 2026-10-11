@@ -1,12 +1,13 @@
 /* =========================================================================
-   Elektronik Akademi — Arayüz (Dark / Profesyonel)
+   Elektronik Akademi — Arayüz (Dark / Profesyonel / PLC Atölyesi tarzı)
    ========================================================================= */
 :root{
-  --bg:#0d1117; --bg2:#111823; --bg3:#161f2e; --card:#151d29;
-  --line:#243044; --line2:#2d3b52;
-  --txt:#e6edf6; --muted:#8ba0ba; --dim:#5f7a99;
-  --red:#e0342c; --gold:#d4af37; --blue:#3a7bd5; --green:#2cc6a0;
-  --ok:#2ea043; --bad:#e5534b; --radius:14px;
+  --bg:#0a0e14; --bg2:#0f1520; --bg3:#141c2a; --card:#111926;
+  --line:#1e2d42; --line2:#2a3f5c;
+  --txt:#e8f0fa; --muted:#7a95b5; --dim:#4a6580;
+  --red:#ff4136; --gold:#f5c542; --blue:#4a9eff; --green:#00d4aa;
+  --ok:#2ea043; --bad:#ff6b6b; --radius:12px;
+  --accent:#4a9eff; --accent2:#00d4aa; --glow:rgba(74,158,255,.15);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -462,8 +463,55 @@ body.dragging .part:hover{filter:none}
 .bb-part.arduino:hover{filter:drop-shadow(0 0 8px #43d9ff)}
 #bb-svg{cursor:crosshair}
 .bb-vlabel{font-family:Consolas,monospace;font-size:9px;pointer-events:none}
-.bb-pin-list{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;font-size:11px}
-.bb-pin-list div{display:flex;justify-content:space-between;padding:2px 6px;background:var(--bg3);border:1px solid var(--line);border-radius:4px;font-family:monospace}
-.bb-pin-list .pin-name{color:var(--muted)}
-.bb-pin-list .pin-node{color:#43d9ff;font-family:Consolas,monospace}
+
 .bb-tool-group{display:flex;gap:4px}
+
+/* =========================== PLC MODULE ============================= */
+.plc-header{padding:20px 0 12px}
+.plc-controls{display:flex;gap:10px;align-items:center;margin-top:12px}
+.plc-btn{padding:8px 18px;border-radius:8px;font-weight:600;font-size:14px;border:1px solid var(--line2);background:var(--bg3);color:var(--txt);transition:.15s}
+.plc-btn:hover{border-color:var(--accent);background:var(--card)}
+.plc-btn.running{background:#1a3a1a;border-color:#44cc44;color:#44cc44}
+.plc-status{font-size:12px;font-family:monospace;color:var(--muted);margin-left:8px}
+.plc-status::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-right:4px}
+
+.plc-body{display:grid;grid-template-columns:1fr 260px;gap:16px;margin-top:16px}
+.plc-ladder{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;min-height:400px}
+.plc-io{display:flex;flex-direction:column;gap:12px}
+.plc-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px}
+.plc-panel h3{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px}
+
+.ladder-frame{position:relative;padding:0 30px}
+.ladder-rail{position:absolute;top:0;bottom:0;width:3px;background:var(--line2);border-radius:2px}
+.ladder-rail.left{left:10px}
+.ladder-rail.right{right:10px}
+
+.ladder-rung{display:flex;align-items:center;gap:0;padding:16px 0;border-bottom:1px dashed var(--line);position:relative;min-height:50px}
+.ladder-rung:last-child{border-bottom:none}
+.rung-num{position:absolute;left:-25px;font-size:11px;color:var(--dim);font-family:monospace}
+
+.ladder-wire{width:20px;height:2px;background:var(--line2)}
+.ladder-rung.active .ladder-wire{background:var(--green);box-shadow:0 0 4px var(--green)}
+
+.ladder-el{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;position:relative}
+.contact-bars{font-size:22px;font-family:monospace;font-weight:bold;color:var(--muted);line-height:1}
+.contact.active .contact-bars{color:var(--green);text-shadow:0 0 8px var(--green)}
+.contact.nc .contact-bars{color:var(--gold)}
+.contact.nc.active .contact-bars{color:var(--green)}
+
+.coil-parens{font-size:20px;font-family:monospace;font-weight:bold;color:var(--muted);line-height:1}
+.coil.active .coil-parens{color:var(--green);text-shadow:0 0 8px var(--green)}
+
+.el-addr{font-size:11px;font-family:monospace;color:var(--txt);font-weight:600}
+.el-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px}
+
+.plc-io-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.plc-io-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:6px;border:1px solid var(--line);background:var(--bg3);font-size:11px;font-family:monospace;color:var(--muted);cursor:pointer;transition:.15s;user-select:none}
+.plc-io-btn:hover{border-color:var(--accent)}
+.plc-io-btn.on{border-color:#44cc44;color:#44cc44;background:#0a1a0a}
+.plc-io-btn.readonly{cursor:default}
+.plc-io-btn.readonly:hover{border-color:var(--line)}
+.io-led{width:10px;height:10px;border-radius:50%;background:var(--line2);transition:.15s}
+.plc-io-btn.on .io-led{background:#44cc44;box-shadow:0 0 8px #44cc44}
+
+@media(max-width:768px){.plc-body{grid-template-columns:1fr}}

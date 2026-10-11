@@ -27,7 +27,7 @@
     circ: null, sim: null, values: {}, frame: 0, playing: true,
     phase: 0, speed: 1, probeA: null, probeB: null, selPart: null, lastT: 0, raf: 0,
     heatMap: {},
-    // Breadboard mode
+    
     bbMode: false,
     bbHoles: [],       // {x,y, type:'power+'|'power-'|'terminal', row,col, node}
     bbNodeMap: {},     // nodeName -> {holes[], voltage}
@@ -120,130 +120,17 @@
   }
 
   /* =========================== BREADBOARD 830 ========================== */
-  const BB = {
-    // Layout
-    holeR: 3.2,
-    holeGap: 8.5,
-    railGap: 22,
-    stripGap: 14,
-    margin: 40,
-    // Renkler
-    col: { bg: "#1a1420", rail: "#2a1818", strip: "#201828", hole: "#0d0a12", holeRing: "#3a2a4a",
-           powerP: "#e04433", powerN: "#3366e0", jumper: "#43d9ff", part: "#dbe6f3", pin: "#e0a52c",
-           arduino: "#2a4a6a", arduinoPin: "#43d9ff", text: "#9fb4cc" },
-    // 830 hole: 2×50 power rails (top/bottom) + 63×10 terminal strip
-    // Terminal strip: 10 rows (5 top + 5 bottom) × 63 cols, center notch at col 31
-    rows: 10,
-    cols: 63,
-    railCols: 50,
-  };
-
-  // Breadboard hole node name generator
-  function bbNodeName(type, idx, sub) {
-    return `BB_${type}_${idx}${sub ? "_" + sub : ""}`;
-  }
+    
+  
 
   // Build breadboard hole map (static layout)
-  function buildBreadboardLayout() {
-    const { holeR, holeGap, railGap, stripGap, margin, rows, cols, railCols } = BB;
-    const holes = [];
-    let y = margin;
-    // Top power rails (+ and -)
-    for (let r = 0; r < 2; r++) {
-      for (let c = 0; c < railCols; c++) {
-        const x = margin + c * holeGap;
-        const type = r === 0 ? "power+" : "power-";
-        holes.push({ x, y, type, rail: r, col: c, node: bbNodeName(type, c, null) });
-      }
-      y += railGap;
-    }
-    y += stripGap;
-    // Terminal strip (10 rows × 63 cols = 630 holes + center visual gap between col 30 and 31)
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        // Wider gap at center (between col 30 and col 31)
-        const gapOffset = c >= 31 ? 12 : 0;
-        const x = margin + c * holeGap + gapOffset;
-        const side = c < 31 ? "L" : "R";
-        const sideCol = c < 31 ? c : c - 31;
-        holes.push({ x, y, type: "terminal", row: r, col: c, side,
-          node: bbNodeName("term", sideCol, side) });
-      }
-      y += holeGap;
-    }
-    y += stripGap;
-    // Bottom power rails
-    for (let r = 0; r < 2; r++) {
-      for (let c = 0; c < railCols; c++) {
-        const x = margin + c * holeGap;
-        const type = r === 0 ? "power+" : "power-";
-        holes.push({ x, y, type, rail: r, col: c, node: bbNodeName(type, c + 100, null) });
-      }
-      y += railGap;
-    }
-    return holes;
-  }
+  
 
-  // Breadboard parts library (physical components that plug into holes)
-  const BB_PARTS = {
-    // 2-pin components (resistor, LED, diode, capacitor)
-    R: { pins: 2, width: 4, label: "Direnç", color: "#dbe6f3", body: drawBBResistor },
-    LED: { pins: 2, width: 3, label: "LED", color: "#e0342c", body: drawBBLED },
-    D: { pins: 2, width: 3, label: "Diyot", color: "#c9a227", body: drawBBDiode },
-    C: { pins: 2, width: 4, label: "Kond.", color: "#9a9cd0", body: drawBBCap },
-    // 3-pin (transistor, MOSFET, regulator)
-    NPN: { pins: 3, width: 3, label: "NPN", color: "#6699cc", body: drawBBTransistor },
-    PNP: { pins: 3, width: 3, label: "PNP", color: "#cc6699", body: drawBBTransistor },
-    NMOS: { pins: 3, width: 3, label: "NMOS", color: "#66cc99", body: drawBBMOSFET },
-    PMOS: { pins: 3, width: 3, label: "PMOS", color: "#99cc66", body: drawBBMOSFET },
-    // Jumper wire
-    JUMPER: { pins: 2, width: 1, label: "Telin", color: "#43d9ff", body: drawBBJumper },
-    // Arduino (special - many pins)
-    ARDUINO: { pins: 28, width: 14, label: "Arduino", color: "#2a4a6a", body: drawBBArduino },
-  };
+  
+  
 
-  // Breadboard part body drawers (SVG strings)
-  function drawBBResistor(w, h, color) {
-    const cx = w/2, cy = h/2, r = Math.min(w,h)/3;
-    return `<rect x="${cx-1}" y="${cy-r}" width="2" height="${2*r}" fill="${color}"/>` +
-      `<rect x="${cx-r}" y="${cy-1}" width="${2*r}" height="2" fill="${color}"/>`;
-  }
-  function drawBBLED(w, h, color) {
-    const cx = w/2, cy = h/2, r = Math.min(w,h)/2.5;
-    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" opacity="0.8"/>` +
-      `<polygon points="${cx},${cy-r} ${cx-r/2},${cy+r/2} ${cx+r/2},${cy+r/2}" fill="${color}"/>`;
-  }
-  function drawBBDiode(w, h, color) {
-    const cx = w/2, cy = h/2, r = Math.min(w,h)/2.5;
-    return `<polygon points="${cx-r},${cy-r} ${cx+r},${cy} ${cx-r},${cy+r}" fill="${color}"/>` +
-      `<line x1="${cx+r/2}" y1="${cy-r/3}" x2="${cx+r/2}" y2="${cy+r/3}" stroke="${color}" stroke-width="1.5"/>`;
-  }
-  function drawBBCap(w, h, color) {
-    const cx = w/2, cy = h/2, r = Math.min(w,h)/3;
-    return `<line x1="${cx-r}" y1="${cy-r}" x2="${cx-r}" y2="${cy+r}" stroke="${color}" stroke-width="2"/>` +
-      `<line x1="${cx+r}" y1="${cy-r}" x2="${cx+r}" y2="${cy+r}" stroke="${color}" stroke-width="2"/>`;
-  }
-  function drawBBTransistor(w, h, color) {
-    const cx = w/2, cy = h/2, r = Math.min(w,h)/2.5;
-    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="1.5"/>` +
-      `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-r*1.5}" stroke="${color}" stroke-width="1.5"/>` +
-      `<line x1="${cx-r}" y1="${cy}" x2="${cx+r}" y2="${cy}" stroke="${color}" stroke-width="1.5"/>`;
-  }
-  function drawBBMOSFET(w, h, color) {
-    const cx = w/2, cy = h/2, r = Math.min(w,h)/2.5;
-    return `<rect x="${cx-r}" y="${cy-r}" width="${2*r}" height="${2*r}" fill="none" stroke="${color}" stroke-width="1.5"/>` +
-      `<line x1="${cx}" y1="${cy}" x2="${cx}" y2="${cy-r*1.5}" stroke="${color}" stroke-width="1.5"/>` +
-      `<line x1="${cx-r*1.5}" y1="${cy}" x2="${cx+r*1.5}" y2="${cy}" stroke="${color}" stroke-width="1.5"/>`;
-  }
-  function drawBBJumper(w, h, color) {
-    const cx = w/2, cy = h/2;
-    return `<line x1="${cx-6}" y1="${cy}" x2="${cx+6}" y2="${cy}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`;
-  }
-  function drawBBArduino(w, h, color) {
-    const cx = w/2, cy = h/2, bw = w*0.8, bh = h*0.8;
-    return `<rect x="${cx-bw/2}" y="${cy-bh/2}" width="${bw}" height="${bh}" rx="4" fill="${color}" stroke="#43d9ff" stroke-width="1"/>` +
-      `<text x="${cx}" y="${cy+4}" text-anchor="middle" fill="#43d9ff" font-size="9" font-family="monospace">ARDUINO</text>`;
-  }
+  
+  
 
   /* --------------------------- sembol çizimi --------------------------
      Tüm parça tipleri için standart EDA sembolleri. Pin uçları
@@ -495,364 +382,28 @@
   }
 
   /* =========================== BREADBOARD RENDER ========================== */
-  function buildBreadboard(circ, frame) {
-    const holes = simView.bbHoles.length ? simView.bbHoles : buildBreadboardLayout();
-    const { holeR, margin, col } = BB;
-    const V = (frame && frame.V) || {};
-    const W = 640, H = 300; // breadboard viewBox
-    let out = `<svg id="bb-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-    out += `<rect width="${W}" height="${H}" fill="${col.bg}"/>`;
-    // Power rail backgrounds
-    out += `<rect x="${margin-4}" y="${margin-4}" width="${BB.railCols*BB.holeGap+8}" height="${2*BB.railGap+BB.holeR*2}" fill="${col.rail}" rx="6"/>`;
-    out += `<rect x="${margin-4}" y="${margin+2*BB.railGap+BB.stripGap+BB.rows*BB.holeGap+BB.stripGap-4}" width="${BB.railCols*BB.holeGap+8}" height="${2*BB.railGap+BB.holeR*2}" fill="${col.rail}" rx="6"/>`;
-    // Terminal strip background
-    const stripY = margin + 2*BB.railGap + BB.stripGap;
-    const stripH = BB.rows * BB.holeGap;
-    out += `<rect x="${margin-4}" y="${stripY-4}" width="${BB.cols*BB.holeGap+8}" height="${stripH+8}" fill="${col.strip}" rx="6"/>`;
-    // Center notch at column 31 (gap between left 31 and right 31)
-    const notchX = margin + 31 * BB.holeGap;
-    out += `<path d="M ${notchX-10} ${stripY-12} L ${notchX} ${stripY-20} L ${notchX+10} ${stripY-12}" fill="none" stroke="${col.text}" stroke-width="2"/>`;
-
-    // Draw holes
-    for (const h of holes) {
-      const nodeV = V[h.node];
-      const ringCol = h.type === "power+" ? col.powerP : (h.type === "power-" ? col.powerN : col.holeRing);
-      out += circleEl(h.x, h.y, holeR, { fill: col.hole, stroke: ringCol, "stroke-width": 1.2 });
-      out += circleEl(h.x, h.y, holeR - 1, { fill: "none", stroke: ringCol, "stroke-width": 0.5, opacity: 0.3 });
-      // Voltage label on power rails
-      if ((h.type === "power+" || h.type === "power-") && nodeV != null && h.col % 5 === 0) {
-        out += txt(h.x, h.y - holeR - 4, nodeV.toFixed(1) + "V", "bb-vlabel", { fill: h.type === "power+" ? col.powerP : col.powerN, "text-anchor": "middle", "font-size": "9" });
-      }
-    }
-
-    // Draw jumpers (wires on breadboard)
-    for (const w of simView.bbWires) {
-      const h1 = holes.find(h => h.node === w.from);
-      const h2 = holes.find(h => h.node === w.to);
-      if (h1 && h2) {
-        out += line(h1.x, h1.y, h2.x, h2.y, w.color || BB.col.jumper, 2.5) +
-          circleEl(h1.x, h1.y, 3, { fill: w.color || BB.col.jumper }) +
-          circleEl(h2.x, h2.y, 3, { fill: w.color || BB.col.jumper });
-      }
-    }
-
-    // Draw breadboard parts
-    for (const bp of simView.bbParts) {
-      const def = BB_PARTS[bp.type];
-      if (!def) continue;
-      // Find holes for this part's pins
-      const pinHoles = bp.pins.map(p => holes.find(h => h.node === p.node)).filter(Boolean);
-      if (pinHoles.length !== bp.pins.length) continue;
-      // Compute bounding box
-      const xs = pinHoles.map(h => h.x), ys = pinHoles.map(h => h.y);
-      const minX = Math.min(...xs), maxX = Math.max(...xs);
-      const minY = Math.min(...ys), maxY = Math.max(...ys);
-      const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
-      const w = (maxX - minX) + def.width * BB.holeGap;
-      const h = (maxY - minY) + def.width * BB.holeGap;
-      // Part body
-      out += '<g data-class="bb-part" data-part="' + bp.id + '" transform="translate(' + (cx - w/2) + ',' + (cy - h/2) + ')">';
-      if (def.body) out += def.body(w, h, def.color);
-      out += '</g>';
-    }
-
-    // Arduino
-    if (simView.bbArduino) {
-      const a = simView.bbArduino;
-      const pinHoles = Object.values(a.pins).map(n => holes.find(h => h.node === n)).filter(Boolean);
-      if (pinHoles.length) {
-        const xs = pinHoles.map(h => h.x), ys = pinHoles.map(h => h.y);
-        const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
-        const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-        const w = 14 * BB.holeGap, h = 8 * BB.holeGap;
-        out += '<g data-class="bb-part arduino" data-part="arduino" transform="translate(' + (cx - w/2) + ',' + (cy - h/2) + ')">';
-        out += BB_PARTS.ARDUINO.body(w, h, BB_PARTS.ARDUINO.color);
-        // Pin labels
-        const pinDefs = [
-          {name:"VIN",idx:0},{name:"GND",idx:1},{name:"GND",idx:2},{name:"5V",idx:3},{name:"3V3",idx:4},{name:"RST",idx:5},
-          {name:"D0/RX",idx:6},{name:"D1/TX",idx:7},{name:"D2",idx:8},{name:"D3",idx:9},{name:"D4",idx:10},{name:"D5",idx:11},
-          {name:"D6",idx:12},{name:"D7",idx:13},{name:"D8",idx:14},{name:"D9",idx:15},{name:"D10",idx:16},{name:"D11",idx:17},
-          {name:"D12",idx:17},{name:"D13",idx:19},{name:"GND",idx:20},{name:"AREF",idx:21},{name:"SDA",idx:22},{name:"SCL",idx:23},
-          {name:"A0",idx:24},{name:"A1",idx:25},{name:"A2",idx:26},{name:"A3",idx:27},{name:"A4",idx:28},{name:"A5",idx:29}
-        ];
-        // Simplified - just show it's Arduino
-        out += '</g>';
-      }
-    }
-
-    // Selected hole highlight
-    if (simView.bbSelHole) {
-      const h = simView.bbSelHole;
-      out += circleEl(h.x, h.y, holeR + 3, { fill: "none", stroke: BB.col.jumper, "stroke-width": 2, "stroke-dasharray": "4,3" });
-    }
-
-    out += '</svg>';
-    return out;
-  }
+  
 
   // Build circuit from breadboard state
-  function breadboardToCircuit() {
-    const parts = [];
-    const nets = new Map(); // nodeName -> {parts[], pins[]}
-    // Add breadboard parts
-    for (const bp of simView.bbParts) {
-      const def = BB_PARTS[bp.type];
-      if (!def) continue;
-      const part = { t: bp.type, id: bp.id, geo: [0,0,0,0] }; // geo not used in sim
-      Object.assign(part, deepClone(def.props || {}));
-      for (const pin of bp.pins) {
-        const netName = pin.node;
-        if (!nets.has(netName)) nets.set(netName, {parts:[], pins:[]});
-        nets.get(netName).parts.push(part.id);
-        nets.get(netName).pins.push(pin.name || "pin");
-      }
-      parts.push(part);
-    }
-    // Add jumpers as 0-resistance wires
-    for (const w of simView.bbWires) {
-      parts.push({ t: "WIRE", id: "J_" + w.from + "_" + w.to, a: w.from, b: w.to, geo: [0,0,0,0] });
-    }
-    // Arduino pins as voltage sources / GPIO
-    if (simView.bbArduino) {
-      // Power pins
-      parts.push({ t: "V", id: "ARD_VIN", v: 5, a: "ARD_VIN", b: "ARD_GND", geo: [0,0,0,0] });
-      parts.push({ t: "V", id: "ARD_5V", v: 5, a: "ARD_5V", b: "ARD_GND", geo: [0,0,0,0] });
-      parts.push({ t: "V", id: "ARD_3V3", v: 3.3, a: "ARD_3V3", b: "ARD_GND", geo: [0,0,0,0] });
-      // Digital pins as controllable switches (simplified)
-      for (let i = 0; i <= 13; i++) {
-        const node = simView.bbArduino.pins["D" + i];
-        if (node) {
-          parts.push({ t: "SW", id: "ARD_D" + i, closed: false, a: node, b: "ARD_GND", geo: [0,0,0,0] });
-        }
-      }
-    }
-    return { id: "breadboard", name: "Breadboard", analysis: "dc", parts };
-  }
+  
 
-  // Breadboard interaction
-  function bbSvgPoint(ev) {
-    const svgEl = document.getElementById("bb-svg"); if (!svgEl) return {x:0,y:0};
-    const pt = svgEl.createSVGPoint(); pt.x = ev.clientX; pt.y = ev.clientY;
-    const m = svgEl.getScreenCTM(); if (!m) return {x:pt.x,y:pt.y};
-    const p = pt.matrixTransform(m.inverse()); return {x:p.x, y:p.y};
-  }
+  
+  
 
-  function bbNearestHole(pt) {
-    let best = null, bestD = 20;
-    for (const h of simView.bbHoles) {
-      const d = Math.hypot(h.x - pt.x, h.y - pt.y);
-      if (d < bestD) { bestD = d; best = h; }
-    }
-    return best;
-  }
+  
 
-  function bbAddPart(type) {
-    if (!simView.bbSelHole) return;
-    const def = BB_PARTS[type]; if (!def) return;
-    const startHole = simView.bbSelHole;
-    // Find adjacent holes for multi-pin parts
-    const pins = [];
-    const holes = simView.bbHoles;
-    if (def.pins === 2) {
-      // Find next hole in same row/rail
-      let second = null;
-      for (const h of holes) {
-        if (h.node === startHole.node) continue;
-        if (h.type === startHole.type && h.row === startHole.row && Math.abs(h.col - startHole.col) === 1) {
-          second = h; break;
-        }
-        if (h.type.startsWith("power") && startHole.type.startsWith("power") && h.type === startHole.type && Math.abs(h.col - startHole.col) === 1) {
-          second = h; break;
-        }
-      }
-      if (!second) return;
-      pins.push({name:"a", node:startHole.node}, {name:"b", node:second.node});
-      // Mark second hole as occupied
-    } else if (def.pins === 3) {
-      // Find 3 adjacent in row
-      const rowHoles = holes.filter(h => h.type === "terminal" && h.row === startHole.row).sort((a,b)=>a.col-b.col);
-      const idx = rowHoles.findIndex(h => h.node === startHole.node);
-      if (idx < 0 || idx + 2 >= rowHoles.length) return;
-      pins.push({name:"c", node:rowHoles[idx].node}, {name:"b", node:rowHoles[idx+1].node}, {name:"e", node:rowHoles[idx+2].node});
-    }
-    const id = type + "_" + Date.now().toString(36);
-    simView.bbParts.push({ id, type, pins });
-    pushHist();
-    redrawBB();
-  }
+  
 
-  function bbAddJumper() {
-    if (!simView.bbSelHole) return;
-    if (!simView.bbJumperStart) {
-      simView.bbJumperStart = simView.bbSelHole;
-      redrawBB();
-      return;
-    }
-    if (simView.bbJumperStart.node === simView.bbSelHole.node) { simView.bbJumperStart = null; redrawBB(); return; }
-    simView.bbWires.push({ from: simView.bbJumperStart.node, to: simView.bbSelHole.node, color: BB.col.jumper });
-    simView.bbJumperStart = null;
-    pushHist();
-    redrawBB();
-  }
+  
 
-  function bbDeleteAtHole(hole) {
-    // Remove part using this hole
-    for (let i = simView.bbParts.length - 1; i >= 0; i--) {
-      if (simView.bbParts[i].pins.some(p => p.node === hole.node)) {
-        simView.bbParts.splice(i, 1);
-        pushHist();
-        redrawBB();
-        return;
-      }
-    }
-    // Remove jumper
-    for (let i = simView.bbWires.length - 1; i >= 0; i--) {
-      if (simView.bbWires[i].from === hole.node || simView.bbWires[i].to === hole.node) {
-        simView.bbWires.splice(i, 1);
-        pushHist();
-        redrawBB();
-        return;
-      }
-    }
-  }
+  
 
-  function redrawBB() {
-    const card = document.getElementById("sim-card");
-    if (card && simView.bbMode) {
-      const circ = breadboardToCircuit();
-      simView.circ = circ;
-      simView.sim = SimEngine.simulate(circ, { values: simView.values });
-      card.innerHTML = buildBreadboard(circ, pickFrame(simView.sim, simView.frame));
-      attachBBListeners();
-    }
-  }
+  
 
-  function attachBBListeners() {
-    const card = document.getElementById("sim-card");
-    if (!card) return;
-    const svg = document.getElementById("bb-svg");
-    if (!svg) return;
-    // Click - select hole
-    card.onclick = ev => {
-      if (simView.bbTool === "wire") return;
-      const pt = bbSvgPoint(ev);
-      const hole = bbNearestHole(pt);
-      if (hole) { simView.bbSelHole = hole; redrawBB(); }
-    };
-    // Mousedown - place part/jumper or drag
-    card.onmousedown = ev => {
-      if (ev.button !== 0) return;
-      const pt = bbSvgPoint(ev);
-      const hole = bbNearestHole(pt);
-      if (!hole) return;
-      if (simView.bbTool === "part") { bbAddPart(simView.bbPartType || "R"); }
-      else if (simView.bbTool === "wire") { bbAddJumper(); }
-      else if (simView.bbTool === "delete") { bbDeleteAtHole(hole); }
-    };
-  }
+  
 
-  // Breadboard view entry
-  function viewBreadboard() {
-    setActiveNav("sim");
-    simView.bbMode = true;
-    simView.bbHoles = buildBreadboardLayout();
-    simView.bbParts = [];
-    simView.bbWires = [];
-    simView.bbWires = [];
-    simView.bbArduino = null;
-    simView.bbTool = "part";
-    simView.bbPartType = "R";
-    simView.bbJumperStart = null;
-    simView.bbSelHole = null;
-
-    const c = document.getElementById("content");
-    c.innerHTML =
-      '<div class="sim-head">' +
-        '<div>' +
-          '<h1 class="page-title">Breadboard 830 + Arduino</h1>' +
-          '<p class="page-sub">Gerçekçi breadboard simülasyonu: parça yerleştir, jumper çek, Arduino entegre et, simüle et.</p>' +
-        '</div>' +
-      '</div>' +
-      '<div class="sim-workbench">' +
-        '<header class="sim-toolbar">' +
-          '<span class="sim-brand"><span class="sim-led"></span> Breadboard</span>' +
-          '<div class="sim-tools" role="group" aria-label="Araç">' +
-            '<button class="sim-btn tool active" id="bb-tool-part" title="Parça yerleştir">Parça</button>' +
-            '<button class="sim-btn tool" id="bb-tool-wire" title="Jumper tel">Telin</button>' +
-            '<button class="sim-btn tool" id="bb-tool-del" title="Sil">Sil</button>' +
-            '<button class="sim-btn" id="bb-add-arduino" title="Arduino ekle">+ Arduino</button>' +
-            '<button class="sim-btn primary" id="bb-simulate" title="Simüle et">▶ Simüle</button>' +
-            '<button class="sim-btn" id="bb-back-schematic" title="Şematik moduna dön">◀ Şematik</button>' +
-          '</div>' +
-          '<span class="sim-spacer"></span>' +
-          '<label class="sim-field">Parça' +
-            '<select id="bb-part-select">' +
-              '<option value="R">Direnç</option>' +
-              '<option value="LED">LED</option>' +
-              '<option value="D">Diyot</option>' +
-              '<option value="C">Kondansatör</option>' +
-              '<option value="NPN">NPN Transistör</option>' +
-              '<option value="PNP">PNP Transistör</option>' +
-              '<option value="NMOS">NMOS</option>' +
-              '<option value="PMOS">PMOS</option>' +
-            '</select>' +
-          '</label>' +
-        '</header>' +
-        '<div class="sim-body">' +
-          '<section class="sim-stage">' +
-            '<div class="sim-card" id="sim-card"></div>' +
-            '<p class="sim-help"><b>Parça:</b> boş deliğe tıkla → parçayı yerleştir · <b>Telin:</b> iki deliğe tıkla → jumper · <b>Sil:</b> deliğe tıkla · <b>Arduino:</b> sağ üste ekle</p>' +
-          '</section>' +
-          '<aside class="sim-side">' +
-            '<div class="sim-panel">' +
-              '<h3>Arduino Pinleri</h3>' +
-              '<div id="bb-arduino-pins" class="bb-pin-list"></div>' +
-            '</div>' +
-            '<div class="sim-panel">' +
-              '<h3>Multimetre</h3>' +
-              '<div id="meter-readout" class="meter"></div>' +
-            '</div>' +
-            '<div class="sim-panel">' +
-              '<h3>Osiloskop</h3>' +
-              '<canvas id="scope-canvas" width="360" height="180"></canvas>' +
-            '</div>' +
-          '</aside>' +
-        '</div>' +
-      '</div>';
-
-    const $ = id => document.getElementById(id);
-    $("bb-tool-part").onclick = () => { simView.bbTool = "part"; updateBBTools(); };
-    $("bb-tool-wire").onclick = () => { simView.bbTool = "wire"; simView.bbJumperStart = null; updateBBTools(); };
-    $("bb-tool-del").onclick = () => { simView.bbTool = "delete"; updateBBTools(); };
-    $("bb-part-select").onchange = e => { simView.bbPartType = e.target.value; };
-    $("bb-add-arduino").onclick = () => bbAddArduino();
-    $("bb-simulate").onclick = () => { redrawBB(); };
-    $("bb-back-schematic").onclick = () => { simView.bbMode = false; viewSim(); };
-
-    function updateBBTools() {
-      ["part","wire","delete"].forEach(t => {
-        const b = document.getElementById("bb-tool-" + t);
-        if (b) b.classList.toggle("active", simView.bbTool === t);
-      });
-    }
-
-    function bbAddArduino() {
-      // Place Arduino on left side of breadboard (over terminal strip rows 0-20)
-      const holes = simView.bbHoles;
-      const termHoles = holes.filter(h => h.type === "terminal" && h.side === "L" && h.col < 14);
-      if (termHoles.length < 28) return;
-      const pins = {};
-      const pinNames = ["VIN","GND","GND","5V","3V3","RST","D0","D1","D2","D3","D4","D5","D6","D7","D8","D9","D10","D11","D12","D13","GND","AREF","SDA","SCL","A0","A1","A2","A3","A4","A5"];
-      for (let i = 0; i < Math.min(pinNames.length, termHoles.length); i++) {
-        pins[pinNames[i]] = termHoles[i].node;
-      }
-      simView.bbArduino = { pins };
-      pushHist();
-      redrawBB();
-    }
-
-    redrawBB();
-  }
+  
+  
 
   /* ------------------------------ osiloskop --------------------------- */
   function drawScope(canvas, sim, frame) {
@@ -1494,7 +1045,6 @@
             '<button class="sim-btn tool" id="tool-wire" title="Tel çek">Tel</button>' +
             '<button class="sim-btn tool" id="tool-erase" title="Sil">Sil</button>' +
             '<button class="sim-btn" id="sim-palette-btn" title="Parça paleti">+ Parça</button>' +
-            '<button class="sim-btn" id="sim-breadboard-btn" title="Breadboard 830">🍞 Breadboard</button>' +
           '</div>' +
           '<span class="sim-spacer"></span>' +
           '<button class="sim-btn" id="sim-undo" title="Geri al (Ctrl+Z)">\u21b6</button>' +
@@ -1560,7 +1110,7 @@
     $("tool-wire").onclick = () => setTool("wire");
     $("tool-erase").onclick = () => setTool("erase");
     $("sim-palette-btn").onclick = () => { paletteOpen = !paletteOpen; $("sim-palette").classList.toggle("open", paletteOpen); };
-    $("sim-breadboard-btn").onclick = () => { viewBreadboard(); };
+    
     $("sim-palette").querySelectorAll("[data-add]").forEach(b => b.onclick = () => addPart(b.dataset.add));
 
     $("sim-play").onclick = () => {

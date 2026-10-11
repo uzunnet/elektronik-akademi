@@ -454,6 +454,7 @@ function route() {
   else if (h === "glossary") viewGlossary();
   else if (h === "figs") viewFigures();
   else if (h === "sim" || h.startsWith("sim/")) { if (typeof viewSim === "function") viewSim(); else viewHome(); }
+  else if (h === "plc") { if (typeof PLC !== "undefined") PLC.render(); else viewHome(); }
   else if (h === "ai") { if (typeof viewAI === "function") viewAI(); else viewHome(); }
   else viewHome();
 }

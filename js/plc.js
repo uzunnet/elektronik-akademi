@@ -215,9 +215,11 @@ const PLC = {
       const dt = this._lastT ? Math.min(60, ts - this._lastT) : 16;
       this._lastT = ts;
 
+      const t0 = performance.now();
       if (window.Scenes) Scenes.update(dt, this);
       this.scan(dt);
       if (window.Scenes) Scenes.render(dt);
+      this.scanMs = performance.now() - t0;
 
       this._uiAcc += dt;
       if (this._uiAcc > 80) { this._uiAcc = 0; this.updateLadderLive(); this.renderIO(); this.renderHMI(); }
@@ -270,6 +272,9 @@ const PLC = {
           '<section class="plc-panel ladder-panel">' +
             '<div class="plc-panel-head"><h3>Ladder Diyagramı</h3>' +
               '<div class="plc-panel-actions">' +
+                '<button class="plc-mini" id="plc-new">Yeni</button>' +
+                '<button class="plc-mini" id="plc-save">Kaydet</button>' +
+                '<button class="plc-mini" id="plc-load">Yükle</button>' +
                 '<button class="plc-mini" id="plc-add-rung">+ Rung</button>' +
               '</div>' +
             '</div>' +
@@ -289,7 +294,8 @@ const PLC = {
             '<h3>İç Röle / Zamanlayıcı / Sayıcı</h3><div class="plc-io-grid" id="plc-internals"></div>' +
           '</section>' +
         '</div>' +
-      '</div>';
+      '</div>' +
+      '<div class="plc-toast" id="plc-toast"></div>';
 
     if (window.Scenes) Scenes.mount(this.scene);
     this.renderLadder();
@@ -518,6 +524,7 @@ const PLC = {
     }
     this.renderLadder();
     this.renderEditor();
+    this.persist();
   },
 
   deleteElem() {
@@ -530,18 +537,21 @@ const PLC = {
     this.sel = null;
     this.renderLadder();
     this.renderEditor();
+    this.persist();
   },
 
   addContact(ri) {
     const rung = this.rungs[ri]; if (!rung) return;
     rung.columns.push([{ type: "contact", addr: "X0", nc: false, label: "", edge: null }]);
     this.renderLadder();
+    this.persist();
   },
 
   addBranch(ri) {
     const rung = this.rungs[ri]; if (!rung || !rung.columns.length) return;
     rung.columns[rung.columns.length - 1].push({ type: "contact", addr: "X0", nc: false, label: "", edge: null });
     this.renderLadder();
+    this.persist();
   },
 
   deleteRung(ri) {
@@ -549,6 +559,7 @@ const PLC = {
     if (this.sel && this.sel.ri === ri) this.sel = null;
     this.renderLadder();
     this.renderEditor();
+    this.persist();
   },
 
 
@@ -585,6 +596,7 @@ const PLC = {
     h += '<div class="hmi-run ' + (this.running ? 'run' : 'stop') + '">' + (this.running ? 'RUN' : 'STOP') + '</div>';
     const cols = ["#22c55e", "#22c55e", "#f59e0b", "#f59e0b", "#4a9eff", "#4a9eff", "#a855f7", "#a855f7"];
     for (let i = 0; i < 8; i++) h += lamp(this.outputs["Y" + i], "Y" + i, cols[i]);
+    h += '<div class="hmi-scan">tarama <b>' + (this.scanMs || 0).toFixed(2) + '</b> ms</div>';
     h += '</div>';
     el.innerHTML = h;
   },
@@ -596,6 +608,12 @@ const PLC = {
     if (rb) rb.onclick = () => this.resetAll();
     const addb = document.getElementById("plc-add-rung");
     if (addb) addb.onclick = () => this.addRung();
+    const nb = document.getElementById("plc-new");
+    if (nb) nb.onclick = () => this.newProgram();
+    const sb = document.getElementById("plc-save");
+    if (sb) sb.onclick = () => this.saveProgram();
+    const lb = document.getElementById("plc-load");
+    if (lb) lb.onclick = () => this.loadSaved();
 
     const ladder = document.getElementById("plc-ladder");
     if (ladder) {
@@ -626,6 +644,7 @@ const PLC = {
         this.scene = btn.dataset.scene;
         document.querySelectorAll(".plc-scene-btn").forEach(b => b.classList.toggle("active", b === btn));
         if (window.Scenes) Scenes.mount(this.scene);
+        this.saveProgram();
       };
     });
 
@@ -650,6 +669,51 @@ const PLC = {
       out: { type: "coil", addr: "Y0", label: "" }
     });
     this.renderLadder();
+  },
+
+  /* ---------------- program yönetimi (localStorage) ---------------- */
+  newProgram() {
+    this.rungs = [{ id: 1, columns: [[{ type: "contact", addr: "X0", nc: false, label: "START", edge: null }]], out: { type: "coil", addr: "Y0", label: "" } }];
+    this.sel = null;
+    this.persist();
+    this.flash("Yeni program");
+    this.renderLadder();
+    this.renderEditor();
+  },
+
+  saveProgram() {
+    this.persist();
+    this.flash("Program kaydedildi");
+    return true;
+  },
+
+  persist() {
+    try { localStorage.setItem("ea_plc_prog", JSON.stringify({ rungs: this.rungs, scene: this.scene })); } catch (e) {}
+  },
+
+  loadSaved() {
+    try {
+      const raw = localStorage.getItem("ea_plc_prog");
+      if (!raw) { this.flash("Kayıt yok"); return false; }
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.rungs) || !data.rungs.length) { this.flash("Kayıt boş"); return false; }
+      this.rungs = data.rungs;
+      if (data.scene && window.Scenes && Scenes.defs[data.scene]) this.scene = data.scene;
+      this.sel = null;
+      this.renderLadder();
+      this.renderEditor();
+      this.flash("Program yüklendi");
+      return true;
+    } catch (e) { this.flash("Yüklenemedi"); return false; }
+  },
+
+  flash(msg) {
+    const el = document.getElementById("plc-toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(this._toastT);
+    this._toastT = setTimeout(() => el.classList.remove("show"), 1600);
   }
 };
 

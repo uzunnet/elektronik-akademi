@@ -297,7 +297,7 @@ const PLC = {
       '</div>' +
       '<div class="plc-toast" id="plc-toast"></div>';
 
-    if (window.Scenes) Scenes.mount(this.scene);
+    if (window.Scenes) { Scenes.mount(this.scene); Scenes.render(); }
     this.renderLadder();
     this.renderIO();
     this.renderHMI();
@@ -643,7 +643,7 @@ const PLC = {
       btn.onclick = () => {
         this.scene = btn.dataset.scene;
         document.querySelectorAll(".plc-scene-btn").forEach(b => b.classList.toggle("active", b === btn));
-        if (window.Scenes) Scenes.mount(this.scene);
+        if (window.Scenes) { Scenes.mount(this.scene); Scenes.render(); }
         this.saveProgram();
       };
     });

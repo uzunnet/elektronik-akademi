@@ -220,7 +220,7 @@ const PLC = {
       if (window.Scenes) Scenes.render(dt);
 
       this._uiAcc += dt;
-      if (this._uiAcc > 80) { this._uiAcc = 0; this.renderLadder(true); this.renderIO(); this.renderHMI(); }
+      if (this._uiAcc > 80) { this._uiAcc = 0; this.updateLadderLive(); this.renderIO(); this.renderHMI(); }
       this._loop();
     });
   },
@@ -276,6 +276,10 @@ const PLC = {
             '<div class="plc-ladder" id="plc-ladder"></div>' +
           '</section>' +
           '<section class="plc-panel">' +
+            '<div class="plc-panel-head"><h3>Ladder Editörü</h3></div>' +
+            '<div class="plc-editor" id="plc-editor"></div>' +
+          '</section>' +
+          '<section class="plc-panel">' +
             '<h3>Girişler (Inputs)</h3><div class="plc-io-grid" id="plc-inputs"></div>' +
           '</section>' +
           '<section class="plc-panel">' +
@@ -291,6 +295,7 @@ const PLC = {
     this.renderLadder();
     this.renderIO();
     this.renderHMI();
+    this.renderEditor();
     this.bindEvents();
   },
 
@@ -317,44 +322,93 @@ const PLC = {
       for (let ci = 0; ci < rung.columns.length; ci++) {
         const col = rung.columns[ci];
         html += '<div class="rung-col' + (col.length > 1 ? " parallel" : "") + '">';
-        for (const elm of col) html += this.contactHTML(elm);
+        for (let ei = 0; ei < col.length; ei++) html += this.contactHTML(col[ei], ri, ci, ei);
         html += '</div>';
       }
-      html += this.outHTML(rung.out);
+      html += this.outHTML(rung.out, ri);
       html += '<div class="rung-rail-r"></div>';
-      html += '</div></div>';
+      html += '</div>';
+      html += '<div class="rung-tools">' +
+        '<button class="rung-tool" data-act="add-contact" data-rung="' + ri + '">+ Kontak</button>' +
+        '<button class="rung-tool" data-act="add-branch" data-rung="' + ri + '">+ Dal</button>' +
+        '<button class="rung-tool del" data-act="del-rung" data-rung="' + ri + '">Sil</button>' +
+        '</div>';
+      html += '</div>';
     }
     el.innerHTML = html;
   },
 
-  contactHTML(el) {
+  updateLadderLive() {
+    const el = document.getElementById("plc-ladder");
+    if (!el) return;
+    const rungs = el.querySelectorAll(".ladder-rung");
+    for (let ri = 0; ri < this.rungs.length && ri < rungs.length; ri++) {
+      const rung = this.rungs[ri];
+      const body = rungs[ri].querySelector(".rung-body");
+      if (body) body.classList.toggle("live", !!rung._true);
+      const cols = rungs[ri].querySelectorAll(".rung-col");
+      for (let ci = 0; ci < rung.columns.length && ci < cols.length; ci++) {
+        const col = rung.columns[ci];
+        const els = cols[ci].querySelectorAll(".ladder-el");
+        for (let ei = 0; ei < col.length && ei < els.length; ei++) {
+          els[ei].classList.toggle("active", !!col[ei]._active);
+        }
+      }
+      const outEl = rungs[ri].querySelector(".ladder-el[data-out]");
+      const o = rung.out;
+      if (outEl && o) {
+        outEl.classList.toggle("active", !!o._val);
+        if (o.type === "timer") {
+          const t = this.timer[o.addr]; const ta = outEl.querySelector(".t-acc");
+          if (t && ta) ta.textContent = Math.round(t.acc) + "/" + t.preset + "ms";
+        } else if (o.type === "counter") {
+          const c = this.counter[o.addr]; const cv = outEl.querySelector(".cnt-val");
+          if (c && cv) cv.textContent = c.acc + "/" + c.preset;
+        }
+      }
+    }
+  },
+
+  isSel(ri, ci, ei, isOut) {
+    const s = this.sel;
+    if (!s || s.ri !== ri) return false;
+    if (isOut) return !!s.out;
+    return !s.out && s.ci === ci && s.ei === ei;
+  },
+
+  contactHTML(el, ri, ci, ei) {
     const on = el._active;
-    return '<div class="ladder-el contact ' + (on ? 'active' : '') + ' ' + (el.nc ? 'nc' : 'no') + '">' +
+    const sel = this.sel && !this.sel.out && this.sel.ri === ri && this.sel.ci === ci && this.sel.ei === ei;
+    const edge = el.edge === "P" ? " ↑P" : el.edge === "N" ? " ↓N" : "";
+    return '<div class="ladder-el contact ' + (on ? 'active' : '') + ' ' + (el.nc ? 'nc' : 'no') + (sel ? ' sel' : '') +
+      '" data-ri="' + ri + '" data-ci="' + ci + '" data-ei="' + ei + '">' +
       '<div class="contact-sym">' + (el.nc ? '<span class="bar"></span><span class="bar tilted"></span>' : '<span class="bar"></span><span class="bar"></span>') + '</div>' +
-      '<div class="el-addr">' + el.addr + '</div>' +
+      '<div class="el-addr">' + el.addr + edge + '</div>' +
       (el.label ? '<div class="el-label">' + el.label + '</div>' : '') +
       '</div>';
   },
 
-  outHTML(o) {
+  outHTML(o, ri) {
     if (!o) return "";
     const on = o._val;
+    const sel = this.sel && this.sel.out && this.sel.ri === ri;
+    const selc = sel ? ' sel' : '';
     if (o.type === "coil") {
-      return '<div class="ladder-el coil ' + (on ? 'active' : '') + '">' +
+      return '<div class="ladder-el coil ' + (on ? 'active' : '') + selc + '" data-ri="' + ri + '" data-out="1">' +
         '<div class="coil-sym">( )</div><div class="el-addr">' + o.addr + '</div>' +
         (o.label ? '<div class="el-label">' + o.label + '</div>' : '') + '</div>';
     }
     if (o.type === "timer") {
-      const t = this.timer[o.addr];
-      return '<div class="ladder-el timer ' + (on ? 'active' : '') + '">' +
+      const t = this.timer[o.addr] || { acc: 0, preset: 0 };
+      return '<div class="ladder-el timer ' + (on ? 'active' : '') + selc + '" data-ri="' + ri + '" data-out="1">' +
         '<div class="t-name">' + (o.kind || "TON") + '</div>' +
         '<div class="el-addr">' + o.addr + '</div>' +
         '<div class="t-acc">' + Math.round(t.acc) + '/' + t.preset + 'ms</div>' +
         '</div>';
     }
     if (o.type === "counter") {
-      const c = this.counter[o.addr];
-      return '<div class="ladder-el counter ' + (on ? 'active' : '') + '">' +
+      const c = this.counter[o.addr] || { acc: 0, preset: 0 };
+      return '<div class="ladder-el counter ' + (on ? 'active' : '') + selc + '" data-ri="' + ri + '" data-out="1">' +
         '<div class="c-name">' + (o.kind || "CTU") + '</div>' +
         '<div class="el-addr">' + o.addr + '</div>' +
         '<div class="cnt-val">' + c.acc + '/' + c.preset + '</div>' +
@@ -362,6 +416,142 @@ const PLC = {
     }
     return "";
   },
+
+  /* ---------------- düzenleme ---------------- */
+  selectElem(ri, ci, ei, isOut) {
+    this.sel = isOut ? { ri, out: true } : { ri, ci, ei };
+    this.renderLadder();
+    this.renderEditor();
+  },
+
+  renderEditor() {
+    const el = document.getElementById("plc-editor");
+    if (!el) return;
+    const s = this.sel;
+    if (!s || !this.rungs[s.ri]) {
+      this.sel = null;
+      el.innerHTML = '<h3>Ladder Editörü</h3><p class="edit-hint">Düzenlemek için ladder üzerinde bir kontak / bobin / zamanlayıcı seç.</p>';
+      return;
+    }
+    el.innerHTML = s.out ? this.editorOut(s.ri, this.rungs[s.ri].out)
+                         : this.editorContact(s.ri, s.ci, s.ei);
+    const apply = el.querySelector("#edit-apply");
+    if (apply) apply.onclick = () => this.applyEdit();
+    const del = el.querySelector("#edit-del");
+    if (del) del.onclick = () => this.deleteElem();
+  },
+
+  _addrSelect(id, cur) {
+    const groups = [["Giriş X", "X"], ["Çıkış Y", "Y"], ["İç Röle M", "M"], ["Zamanlayıcı T", "T"], ["Sayıcı C", "C"]];
+    let h = '<select id="' + id + '">';
+    for (const g of groups) {
+      h += '<optgroup label="' + g[0] + '">';
+      for (let i = 0; i <= 7; i++) {
+        const a = g[1] + i;
+        h += '<option value="' + a + '"' + (cur === a ? ' selected' : '') + '>' + a + '</option>';
+      }
+      h += '</optgroup>';
+    }
+    return h + '</select>';
+  },
+
+  editorContact(ri, ci, ei) {
+    const elm = this.rungs[ri].columns[ci][ei];
+    return '<h3>Kontak · Rung ' + (ri + 1) + '</h3>' +
+      '<div class="edit-row"><label>Adres</label>' + this._addrSelect("edit-addr", elm.addr) + '</div>' +
+      '<div class="edit-row"><label>Tip</label><select id="edit-nc">' +
+        '<option value="0"' + (!elm.nc ? ' selected' : '') + '>Normalde Açık (NO)</option>' +
+        '<option value="1"' + (elm.nc ? ' selected' : '') + '>Normalde Kapalı (NC)</option></select></div>' +
+      '<div class="edit-row"><label>Kenar</label><select id="edit-edge">' +
+        '<option value="">—</option>' +
+        '<option value="P"' + (elm.edge === 'P' ? ' selected' : '') + '>Yükselen ↑</option>' +
+        '<option value="N"' + (elm.edge === 'N' ? ' selected' : '') + '>Düşen ↓</option></select></div>' +
+      '<div class="edit-row"><label>Etiket</label><input type="text" id="edit-label" maxlength="14" value="' + (elm.label || '') + '"></div>' +
+      '<div class="edit-actions"><button class="plc-mini primary" id="edit-apply">Uygula</button>' +
+      '<button class="plc-mini danger" id="edit-del">Sil</button></div>';
+  },
+
+  editorOut(ri, o) {
+    let h = '<h3>Çıkış · Rung ' + (ri + 1) + '</h3>';
+    h += '<div class="edit-row"><label>Tür</label><select id="edit-otype">' +
+      [["coil", "Bobin ( )"], ["timer", "Zamanlayıcı"], ["counter", "Sayıcı"]].map(a =>
+        '<option value="' + a[0] + '"' + (o.type === a[0] ? ' selected' : '') + '>' + a[1] + '</option>').join('') +
+      '</select></div>';
+    h += '<div class="edit-row"><label>Adres</label>' + this._addrSelect("edit-addr", o.addr) + '</div>';
+    if (o.type === "timer") {
+      h += '<div class="edit-row"><label>Tip</label><select id="edit-kind">' +
+        '<option value="TON"' + (o.kind !== 'TOF' ? ' selected' : '') + '>TON (gecikmeli aç)</option>' +
+        '<option value="TOF"' + (o.kind === 'TOF' ? ' selected' : '') + '>TOF (gecikmeli kapa)</option></select></div>' +
+        '<div class="edit-row"><label>Süre (ms)</label><input type="number" id="edit-preset" value="' + (o.preset || 1000) + '" min="50" step="50"></div>';
+    } else if (o.type === "counter") {
+      h += '<div class="edit-row"><label>Tip</label><select id="edit-kind">' +
+        '<option value="CTU"' + (o.kind !== 'CTD' ? ' selected' : '') + '>CTU (yukarı)</option>' +
+        '<option value="CTD"' + (o.kind === 'CTD' ? ' selected' : '') + '>CTD (aşağı)</option></select></div>' +
+        '<div class="edit-row"><label>Hedef</label><input type="number" id="edit-preset" value="' + (o.preset || 5) + '" min="1"></div>';
+    }
+    h += '<div class="edit-actions"><button class="plc-mini primary" id="edit-apply">Uygula</button></div>';
+    return h;
+  },
+
+  applyEdit() {
+    const s = this.sel; if (!s) return;
+    const rung = this.rungs[s.ri]; if (!rung) return;
+    const g = (id) => { const e = document.getElementById(id); return e ? e.value : null; };
+    if (s.out) {
+      const o = rung.out;
+      const nt = g("edit-otype");
+      if (nt && nt !== o.type) {
+        o.type = nt;
+        if (nt === "timer") { o.kind = o.kind || "TON"; o.preset = o.preset || 1000; o.addr = "T0"; }
+        else if (nt === "counter") { o.kind = o.kind || "CTU"; o.preset = o.preset || 5; o.addr = "C0"; }
+        else { o.addr = "Y0"; }
+      }
+      const na = g("edit-addr"); if (na) o.addr = na;
+      if (o.type === "timer") { o.kind = g("edit-kind") || o.kind || "TON"; const p = parseInt(g("edit-preset"), 10); if (p > 0) o.preset = p; }
+      else if (o.type === "counter") { o.kind = g("edit-kind") || o.kind || "CTU"; const p = parseInt(g("edit-preset"), 10); if (p > 0) o.preset = p; }
+    } else {
+      const elm = rung.columns[s.ci][s.ei];
+      const na = g("edit-addr"); if (na) elm.addr = na;
+      elm.nc = g("edit-nc") === "1";
+      elm.edge = g("edit-edge") || null;
+      elm.label = g("edit-label") || "";
+    }
+    this.renderLadder();
+    this.renderEditor();
+  },
+
+  deleteElem() {
+    const s = this.sel; if (!s || s.out) return;
+    const rung = this.rungs[s.ri]; if (!rung) return;
+    const col = rung.columns[s.ci];
+    if (col.length > 1) col.splice(s.ei, 1);
+    else rung.columns.splice(s.ci, 1);
+    if (!rung.columns.length) this.rungs.splice(s.ri, 1);
+    this.sel = null;
+    this.renderLadder();
+    this.renderEditor();
+  },
+
+  addContact(ri) {
+    const rung = this.rungs[ri]; if (!rung) return;
+    rung.columns.push([{ type: "contact", addr: "X0", nc: false, label: "", edge: null }]);
+    this.renderLadder();
+  },
+
+  addBranch(ri) {
+    const rung = this.rungs[ri]; if (!rung || !rung.columns.length) return;
+    rung.columns[rung.columns.length - 1].push({ type: "contact", addr: "X0", nc: false, label: "", edge: null });
+    this.renderLadder();
+  },
+
+  deleteRung(ri) {
+    this.rungs.splice(ri, 1);
+    if (this.sel && this.sel.ri === ri) this.sel = null;
+    this.renderLadder();
+    this.renderEditor();
+  },
+
+
 
   renderIO() {
     const ie = document.getElementById("plc-inputs");
@@ -407,28 +597,50 @@ const PLC = {
     const addb = document.getElementById("plc-add-rung");
     if (addb) addb.onclick = () => this.addRung();
 
-    document.querySelectorAll("[data-plc-in]").forEach(btn => {
-      const addr = btn.dataset.plcIn;
-      btn.onmousedown = (e) => { e.preventDefault(); this.setInput(addr, true); this.renderIO(); this.renderLadder(); };
-      btn.onmouseup = () => { this.setInput(addr, false); this.renderIO(); this.renderLadder(); };
-      btn.onmouseleave = () => { if (this.inputs[addr]) { this.setInput(addr, false); this.renderIO(); this.renderLadder(); } };
-    });
+    const ladder = document.getElementById("plc-ladder");
+    if (ladder) {
+      ladder.onmousedown = (e) => {
+        if (e.target.closest(".rung-tool")) return;
+        const el = e.target.closest(".ladder-el");
+        if (el) this.selectElem(+el.dataset.ri, +el.dataset.ci, +el.dataset.ei, !!el.dataset.out);
+      };
+      ladder.onclick = (e) => {
+        const tool = e.target.closest(".rung-tool");
+        if (!tool) return;
+        const ri = +tool.dataset.rung, act = tool.dataset.act;
+        if (act === "add-contact") this.addContact(ri);
+        else if (act === "add-branch") this.addBranch(ri);
+        else if (act === "del-rung") this.deleteRung(ri);
+      };
+    }
+
+    const ig = document.getElementById("plc-inputs");
+    if (ig) {
+      ig.onmousedown = (e) => { const b = e.target.closest("[data-plc-in]"); if (!b) return; e.preventDefault(); this.setInput(b.dataset.plcIn, true); this.renderIO(); this.updateLadderLive(); };
+      ig.onmouseup = (e) => { const b = e.target.closest("[data-plc-in]"); if (!b) return; this.setInput(b.dataset.plcIn, false); this.renderIO(); this.updateLadderLive(); };
+      ig.onmouseleave = (e) => { const b = e.target.closest("[data-plc-in]"); if (b) { this.setInput(b.dataset.plcIn, false); this.renderIO(); this.updateLadderLive(); } };
+    }
 
     document.querySelectorAll(".plc-scene-btn").forEach(btn => {
       btn.onclick = () => {
         this.scene = btn.dataset.scene;
         document.querySelectorAll(".plc-scene-btn").forEach(b => b.classList.toggle("active", b === btn));
         if (window.Scenes) Scenes.mount(this.scene);
-        const t = document.getElementById("plc-scene-title");
-        if (t) t.textContent = Scenes.defs[this.scene] ? Scenes.defs[this.scene].name : "";
-        if (window.Scenes) Scenes.render(16);
       };
     });
 
     document.querySelectorAll(".plc-prog-btn").forEach(btn => {
-      btn.onclick = () => { this.loadProgram(btn.dataset.prog); this.renderAll(); if (window.Scenes) Scenes.render(16); };
+      btn.onclick = () => {
+        this.loadProgram(btn.dataset.prog);
+        this.sel = null;
+        this.renderLadder();
+        this.renderEditor();
+        this.renderIO();
+        this.renderHMI();
+      };
     });
   },
+
 
   addRung() {
     const n = this.rungs.length + 1;

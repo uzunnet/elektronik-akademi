@@ -460,21 +460,28 @@
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     const W = canvas.width, H = canvas.height;
-    const L = 34, R = 10, T = 16, B = 18;
+    const L = 40, R = 14, T = 26, B = 24;
     const gx = W - L - R, gy = H - T - B;
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#0a0e15"; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = "#141e2d"; ctx.lineWidth = 1;
+    ctx.fillStyle = "#05090f"; ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = "#16202e"; ctx.lineWidth = 1;
     for (let i = 0; i <= 10; i++) { const x = L + gx * i / 10; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + gy); ctx.stroke(); }
     for (let j = 0; j <= 8; j++) { const y = T + gy * j / 8; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + gx, y); ctx.stroke(); }
-    ctx.strokeStyle = "#22344f";
+    ctx.strokeStyle = "rgba(40,60,88,.55)"; ctx.setLineDash([1, 3]);
+    for (let i = 0; i <= 50; i++) { if (i % 5 === 0) continue; const x = L + gx * i / 50; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + gy); ctx.stroke(); }
+    for (let j = 0; j <= 40; j++) { if (j % 5 === 0) continue; const y = T + gy * j / 40; ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L + gx, y); ctx.stroke(); }
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "#2c4568";
     ctx.beginPath(); ctx.moveTo(L, T + gy / 2); ctx.lineTo(L + gx, T + gy / 2); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(L + gx / 2, T); ctx.lineTo(L + gx / 2, T + gy); ctx.stroke();
+    ctx.strokeStyle = "#2b3f5c"; ctx.strokeRect(L, T, gx, gy);
 
     if (sim && sim.mode === "ac" && sim.freqs && sim.freqs.length) { drawBode(ctx, W, H, L, R, T, B, gx, gy, sim); return; }
     if (!sim || !sim.probes || !sim.probes.length || sim.mode !== "tran") {
-      ctx.fillStyle = "#5f7a99"; ctx.font = "13px 'Segoe UI'"; ctx.textAlign = "center";
-      ctx.fillText("Bu devre için dalga yok", W / 2, H / 2); { const ro = document.getElementById("scope-readout"); if (ro) ro.innerHTML = ""; }
+      ctx.fillStyle = "#54688a"; ctx.font = "14px 'Segoe UI'"; ctx.textAlign = "center";
+      ctx.fillText("sinyal yok", W / 2, H / 2);
+      const ro = document.getElementById("scope-readout"); if (ro) ro.innerHTML = "";
+      const me = document.getElementById("scope-meas"); if (me) me.innerHTML = "";
       return;
     }
     const nets = sim.probes;
@@ -484,55 +491,68 @@
     const span = Math.max(fullSpan * view, 1e-12);
     const curT = frame ? frame.t : sim.frames[N - 1].t;
     let t0 = curT - span * 0.9;
-    t0 = Math.max(0, Math.min(t0, Math.max(0, fullSpan - span)));
+    t0 = Math.max(0, Math.min(t0, fullSpan - span));
     const t1 = t0 + span;
-    const xOf = t => L + gx * (t - t0) / span;
-
-    let mx = 0, i0 = -1, i1 = -1;
-    for (let i = 0; i < N; i++) {
-      const t = sim.frames[i].t;
-      if (t < t0 || t > t1) continue;
-      if (i0 < 0) i0 = i;
-      i1 = i;
-      for (const n of nets) { const v = Math.abs(sim.frames[i].V[n] || 0); if (v > mx) mx = v; }
-    }
-    if (i0 < 0) { i0 = N - 1; i1 = N - 1; }
-    const vdiv = niceStep(Math.max(mx, 1e-6) / 4);
-    const yOf = v => T + gy / 2 - (v / (vdiv * 4)) * (gy / 2);
-
-    for (const n of nets) {
-      ctx.strokeStyle = netColor(n); ctx.lineWidth = 1.8; ctx.shadowColor = netColor(n); ctx.shadowBlur = 4;
-      ctx.beginPath();
-      for (let i = i0; i <= i1; i++) {
-        const t = sim.frames[i].t, v = sim.frames[i].V[n] || 0;
-        const x = xOf(t), y = yOf(v);
-        i === i0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
+    let vmax = -1e9, vmin = 1e9;
+    for (let i = 0; i < N; i++) { const t = sim.frames[i].t; if (t < t0 || t > t1) continue; for (const n of nets) { const v = sim.frames[i].V[n] || 0; if (v > vmax) vmax = v; if (v < vmin) vmin = v; } }
+    if (vmax < vmin) { vmax = 1; vmin = -1; }
+    let vdiv;
+    if (simView.scopeVdiv && simView.scopeVdiv !== "auto") vdiv = +simView.scopeVdiv;
+    else vdiv = niceStep(Math.max(vmax - vmin, 1e-9) / 6.4);
+    const mid = (vmax + vmin) / 2;
+    const pos = simView.scopePos == null ? 0.5 : simView.scopePos;
+    const yFor = v => (T + gy * pos) - (v - mid) / vdiv * (gy / 8);
+    const xFor = t => L + gx * (t - t0) / span;
+    nets.forEach(n => {
+      ctx.strokeStyle = netColor(n); ctx.lineWidth = 1.8; ctx.shadowColor = netColor(n); ctx.shadowBlur = 4; ctx.beginPath();
+      let started = false;
+      for (let i = 0; i < N; i++) { const t = sim.frames[i].t; if (t < t0 || t > t1) continue; const x = xFor(t), y = yFor(sim.frames[i].V[n] || 0); if (started) ctx.lineTo(x, y); else { ctx.moveTo(x, y); started = true; } }
       ctx.stroke(); ctx.shadowBlur = 0;
-    }
-    if (curT >= t0 && curT <= t1) {
-      ctx.strokeStyle = "#e0342c"; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(xOf(curT), T); ctx.lineTo(xOf(curT), T + gy); ctx.stroke(); ctx.setLineDash([]);
-    }
-    const c0 = nets[0], vals = [];
-    for (let i = i0; i <= i1; i++) vals.push(sim.frames[i].V[c0] || 0);
-    let vmax = -1e9, vmin = 1e9, cross = 0;
-    for (let i = 0; i < vals.length; i++) { if (vals[i] > vmax) vmax = vals[i]; if (vals[i] < vmin) vmin = vals[i]; if (i && (vals[i - 1] < 0) !== (vals[i] < 0)) cross++; }
-    const vpp = vmax - vmin, vavg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
-    const freq = cross / 2 / span / 1000;
-
-    ctx.font = "11px Consolas,monospace"; ctx.textAlign = "left";
-    nets.forEach((n, i) => {
-      ctx.fillStyle = netColor(n);
-      ctx.fillText("\u25cf" + n + " " + (frame ? (frame.V[n] || 0).toFixed(2) : "0") + "V", L + 4 + i * 96, T - 5);
     });
-    ctx.fillStyle = "#7f9bbf"; ctx.textAlign = "right";
-    ctx.fillText("V/div " + (vdiv >= 1 ? vdiv.toFixed(1) : vdiv.toPrecision(2)), W - R, T - 5);
-    const ro = document.getElementById("scope-readout");
-    if (ro) {
-      ro.innerHTML = "t/div <b>" + fmtTime(span / 10) + "</b> \u00b7 Vpp <b>" + vpp.toFixed(2) + "V</b> \u00b7 Ort <b>" + vavg.toFixed(2) + "V</b>" +
-        (freq > 1 ? " \u00b7 f\u2248<b>" + (freq >= 1000 ? (freq / 1000).toFixed(2) + " kHz" : freq.toFixed(1) + " Hz") + "</b>" : "");
+    const trig = simView.scopeTrig == null ? 0.5 : simView.scopeTrig;
+    const yTrig = yFor(mid + (0.5 - trig) * 8 * vdiv);
+    if (yTrig > T && yTrig < T + gy) {
+      ctx.strokeStyle = "rgba(245,158,11,.65)"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(L, yTrig); ctx.lineTo(L + gx, yTrig); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#f59e0b"; ctx.beginPath(); ctx.moveTo(L + gx, yTrig); ctx.lineTo(L + gx + 8, yTrig - 4); ctx.lineTo(L + gx + 8, yTrig + 4); ctx.closePath(); ctx.fill();
     }
+    const c1 = simView.cur1 == null ? 0.3 : simView.cur1, c2 = simView.cur2 == null ? 0.7 : simView.cur2;
+    [[c1, "#22d3ee", "T1"], [c2, "#f472b6", "T2"]].forEach(cd => {
+      const x = L + gx * cd[0];
+      ctx.strokeStyle = cd[1]; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, T + gy); ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.fillStyle = cd[1]; ctx.font = "10px Consolas,monospace"; ctx.textAlign = "left"; ctx.fillText(cd[2], x + 2, T + 10);
+    });
+    nets.forEach((n, i) => {
+      const y = T + gy * pos;
+      ctx.fillStyle = netColor(n);
+      ctx.beginPath(); ctx.moveTo(L, y); ctx.lineTo(L - 6, y - 4); ctx.lineTo(L - 6, y + 4); ctx.closePath(); ctx.fill();
+      ctx.font = "10px Consolas,monospace"; ctx.textAlign = "left";
+      ctx.fillText("\u25b8" + n, L + 2, T + 11 + i * 12);
+    });
+    ctx.fillStyle = "#8fb0d6"; ctx.font = "10px Consolas,monospace";
+    ctx.textAlign = "left"; ctx.fillText(vdiv >= 1 ? vdiv.toFixed(vdiv < 10 ? 1 : 0) + " V/div" : (vdiv * 1000).toFixed(0) + " mV/div", L + 2, H - 6);
+    ctx.textAlign = "right"; ctx.fillText("t " + fmtTime(span / 10) + "/div", L + gx - 2, H - 6);
+
+    const c0 = nets[0], vals = [];
+    for (let i = 0; i < N; i++) { const t = sim.frames[i].t; if (t < t0 || t > t1) continue; vals.push(sim.frames[i].V[c0] || 0); }
+    let vp = -1e9, vn = 1e9, sum2 = 0;
+    for (let i = 0; i < vals.length; i++) { if (vals[i] > vp) vp = vals[i]; if (vals[i] < vn) vn = vals[i]; sum2 += vals[i] * vals[i]; }
+    const vpp = vp - vn, vavg = vals.reduce((a, b) => a + b, 0) / (vals.length || 1), vrms = Math.sqrt(sum2 / (vals.length || 1));
+    let cross = 0;
+    for (let i = 1; i < vals.length; i++) if ((vals[i - 1] < vavg) !== (vals[i] < vavg)) cross++;
+    const f = cross / 2 / span / 1000;
+    const dtC = Math.abs(c2 - c1) * span;
+    const me = document.getElementById("scope-meas");
+    if (me) me.innerHTML =
+      '<span>Vpp <b>' + vpp.toFixed(2) + '</b></span>' +
+      '<span>Ort <b>' + vavg.toFixed(2) + '</b></span>' +
+      '<span>Vrms <b>' + vrms.toFixed(2) + '</b></span>' +
+      '<span>f <b>' + (f >= 1000 ? (f / 1000).toFixed(2) + "k" : f.toFixed(1)) + '</b></span>' +
+      '<span>T <b>' + (f > 0.01 ? fmtTime(1000 / f) : "\u2014") + '</b></span>' +
+      '<span>\u0394t <b>' + fmtTime(dtC) + '</b></span>' +
+      '<span>1/\u0394t <b>' + (dtC > 0 ? (1 / (dtC / 1000) >= 1000 ? (1 / (dtC / 1000) / 1000).toFixed(2) + "k" : (1 / (dtC / 1000)).toFixed(1)) : "\u2014") + '</b></span>';
+    const ro = document.getElementById("scope-readout");
+    if (ro) ro.innerHTML = nets.map(n => '<span style="color:' + netColor(n) + '">\u25cf</span>' + n + " " + (frame ? (frame.V[n] || 0).toFixed(2) : "0") + "V").join(" &nbsp; ") +
+      " \u00b7 " + (simView.scopeVdiv && simView.scopeVdiv !== "auto" ? vdiv + " V/div (MAN)" : "V/div AUTO");
   }
 
   function drawBode(ctx, W, H, L, R, T, B, gx, gy, sim) {
@@ -567,8 +587,14 @@
     if (ro) {
       let fc = null;
       for (let i = 1; i < mag.length; i++) if ((mag[i - 1] >= mmax - 3) !== (mag[i] >= mmax - 3)) { fc = fr[i]; break; }
-      ro.innerHTML = "Bode |H| <b>" + mag[mag.length - 1].toFixed(1) + " dB</b>" +
-        (fc != null ? " · f\u208b\u2083dB <b>" + (fc >= 1000 ? (fc / 1000).toFixed(2) + " kHz" : fc.toFixed(0) + " Hz") + "</b>" : "");
+      ro.innerHTML = "BODE \u00b7 V(" + sim.probe + ")/V(" + sim.ref + ")";
+      const me = document.getElementById("scope-meas");
+      if (me) me.innerHTML =
+        '<span>Kazan\u00e7 <b>' + mag[mag.length - 1].toFixed(1) + ' dB</b></span>' +
+        '<span>f<sub>-3dB</sub> <b>' + (fc != null ? (fc >= 1000 ? (fc / 1000).toFixed(2) + ' kHz' : fc.toFixed(0) + ' Hz') : '\u2014') + '</b></span>' +
+        '<span>Faz <b>' + ph[ph.length - 1].toFixed(0) + '\u00b0</b></span>' +
+        '<span>f<sub>1</sub> <b>' + (f0 >= 1000 ? (f0 / 1000).toFixed(0) + 'k' : f0.toFixed(0)) + '</b></span>' +
+        '<span>f<sub>2</sub> <b>' + (f1 >= 1e6 ? (f1 / 1e6).toFixed(0) + 'M' : f1 >= 1000 ? (f1 / 1000).toFixed(0) + 'k' : f1.toFixed(0)) + '</b></span>';
     }
   }
 
@@ -639,23 +665,89 @@
     if (st) st.textContent = sim.mode === "tran" ? "t = " + (frame.t * 1000).toFixed(2) + " ms" : "DC (sabit)";
   }
 
-  /* ------------------------------ multimetre -------------------------- */
+  /* ------------------------------ multimetre (DMM) -------------------- */
+  function resistanceBetween(parts, a, b) {
+    if (a == null || b == null || a === b) return null;
+    const resist = parts.filter(p => p.t === "R" || p.t === "WIRE" || (p.t === "SW" && p.closed))
+      .map(p => ({ t: p.t, a: p.a, b: p.b, v: p.v, closed: p.closed, geo: p.geo || [0, 0, 0, 80] }));
+    resist.push({ t: "I", id: "__I", a: a, b: b, v: 1, geo: [0, 0, 0, 80] });
+    if (b !== "0") resist.push({ t: "WIRE", id: "__G", a: b, b: "0", geo: [0, 0, 0, 0] });
+    let sim; try { sim = SimEngine.simulate({ id: "_ohm", name: "ohm", analysis: "dc", parts: resist }, {}); } catch (e) { return null; }
+    if (!sim.frames || !sim.frames.length) return null;
+    const V = sim.frames[0].V;
+    return Math.abs((V[a] || 0) - (V[b] || 0));
+  }
+  function measureOhm(circ, a, b) {
+    const key = a + "|" + b, now = Date.now(), c = simView._ohm;
+    if (c && c.key === key && now - c.at < 300) return c.val;
+    const val = resistanceBetween(circ.parts, a, b);
+    simView._ohm = { key: key, val: val, at: now };
+    return val;
+  }
+  function fmtDmm(v, unit) {
+    const neg = v < 0, av = Math.abs(v);
+    const pre = [[1e9, "G"], [1e6, "M"], [1e3, "k"], [1, ""], [1e-3, "m"], [1e-6, "\u00b5"], [1e-9, "n"], [1e-12, "p"]];
+    let s = "", val = v;
+    for (const pf of pre) { if (av >= pf[0]) { val = v / pf[0]; s = pf[1]; break; } }
+    if (av > 0 && av < 1e-12) { val = v / 1e-12; s = "p"; }
+    const a = Math.abs(val);
+    const dec = a >= 1000 ? 0 : a >= 100 ? 1 : a >= 10 ? 2 : a >= 1 ? 3 : 4;
+    return { txt: (neg ? "-" : "") + a.toFixed(dec), unit: s + unit, sub: "", auto: true };
+  }
+  const DMM_MODES = { off: "OFF", vdc: "V\u2387", vac: "V\u223c", ohm: "\u03a9", cont: "\u2022)))", adc: "A\u2387", diode: "\u2192|" };
+  function dmmMeasure(circ, frame, sim) {
+    const V = (frame && frame.V) || {}, I = (frame && frame.I) || {};
+    const a = simView.probeA, b = simView.probeB, mode = simView.dmmMode || "vdc";
+    if (mode === "off") return { off: true };
+    if (mode === "vdc" || mode === "vac") {
+      if (a == null || b == null) return { hint: "\u0130ki d\u00fc\u011f\u00fcme t\u0131kla \u2192 gerilim" };
+      let v;
+      if (mode === "vac" && sim && sim.mode === "tran" && sim.frames) {
+        let s = 0, n = 0;
+        for (const f of sim.frames) { const x = (f.V[a] || 0) - (f.V[b] || 0); s += x * x; n++; }
+        v = Math.sqrt(s / (n || 1));
+      } else v = (V[a] || 0) - (V[b] || 0);
+      const r = fmtDmm(v, "V"); r.sub = mode === "vac" ? "V~ RMS  " + a + "\u2212" + b : "V=  " + a + "\u2212" + b; return r;
+    }
+    if (mode === "adc") {
+      const p = simView.selPart;
+      if (p == null || I[p] == null) return { hint: "Bir par\u00e7a se\u00e7 (ak\u0131m seri \u00f6l\u00e7\u00fcl\u00fcr)" };
+      const r = fmtDmm(I[p], "A"); r.sub = p + " ak\u0131m\u0131"; return r;
+    }
+    if (mode === "ohm" || mode === "cont") {
+      if (a == null || b == null) return { hint: "\u0130ki d\u00fc\u011f\u00fcme t\u0131kla \u2192 diren\u00e7" };
+      const R = measureOhm(circ, a, b);
+      if (R == null || R > 2e6) return { txt: "OL", unit: "", sub: mode === "cont" ? "\u2022)))" : "\u03a9", auto: true };
+      const r = fmtDmm(mode === "cont" ? Math.round(R) : R, "\u03a9");
+      if (mode === "cont") { r.sub = "\u2022)))"; r.beep = R < 50; }
+      return r;
+    }
+    if (mode === "diode") {
+      const p = simView.selPart;
+      if (p == null) return { hint: "Bir diyot / LED se\u00e7" };
+      const part = circ.parts.find(x => x.id === p);
+      if (!part || ["D", "LED", "Z"].indexOf(part.t) < 0) return { hint: "Diyot / LED / Zener se\u00e7" };
+      if (!frame || frame.partV == null || frame.partV[p] == null) return { hint: "\u00d6l\u00e7\u00fcm yok" };
+      const r = fmtDmm(frame.partV[p], "V"); r.sub = "\u2192| " + p + " (Vf)"; return r;
+    }
+    return { off: true };
+  }
   function updateMeter(circ, frame) {
     const el = document.getElementById("meter-readout"); if (!el) return;
-    const V = frame.V, I = frame.I || {};
-    let html = "";
-    if (simView.probeA != null && simView.probeB != null) {
-      const v = (V[simView.probeA] || 0) - (V[simView.probeB] || 0);
-      html += '<div class="meter-big">' + v.toFixed(3) + ' <small>V</small></div><div class="meter-sub">V(' + simView.probeA + ') \u2212 V(' + simView.probeB + ')</div>';
-    } else {
-      html += '<div class="meter-hint">İki düğüme tıkla (ör. <b>in</b> ve <b>0</b>) → gerilim ölçülür.</div>';
-    }
-    if (simView.selPart && I[simView.selPart] != null) {
-      const p = simView.selPart;
-      const pv = (frame.partV && frame.partV[p] != null) ? frame.partV[p].toFixed(3) : "0";
-      html += '<div class="meter-part">' + p + ': <b>' + fnum(I[p] * 1000, "mA") + '</b> · ' + pv + ' V</div>';
-    }
-    el.innerHTML = html;
+    const m = dmmMeasure(circ, frame, simView.sim);
+    const modeLbl = DMM_MODES[simView.dmmMode || "vdc"] || "";
+    if (m.off) { el.innerHTML = '<div class="dmm-digits dim">-- --</div>'; setDmmChips("OFF", "", ""); return; }
+    if (m.hint) { el.innerHTML = '<div class="dmm-digits dim">--</div><div class="dmm-hint">' + m.hint + '</div>'; setDmmChips(modeLbl, "AUTO", ""); return; }
+    const beep = m.beep ? '<span class="dmm-beep on">\u2022)))</span>' : m.beep === false ? '<span class="dmm-beep">\u2022)))</span>' : "";
+    el.innerHTML = '<div class="dmm-digits">' + m.txt + '</div>' +
+      '<div class="dmm-unit">' + (m.unit || "") + '</div>' +
+      '<div class="dmm-sub">' + (m.sub || "") + '</div>';
+    setDmmChips(modeLbl, m.auto ? "AUTO" : "", beep);
+  }
+  function setDmmChips(mode, auto, beep) {
+    const mo = document.getElementById("dmm-mode"); if (mo) mo.textContent = mode || "";
+    const au = document.getElementById("dmm-auto"); if (au) au.textContent = auto || "";
+    const bp = document.getElementById("dmm-beep"); if (bp) bp.innerHTML = beep || "";
   }
 
   /* --------------------------- kontroller (knob) ---------------------- */
@@ -1217,13 +1309,37 @@
               '<h3>Değerler</h3>' +
               '<div id="sim-knobs"></div>' +
             '</div>' +
-            '<div class="sim-panel">' +
-              '<h3>Multimetre</h3>' +
-              '<div id="meter-readout" class="meter"></div>' +
+            '<div class="sim-panel dmm-panel">' +
+              '<h3>Multimetre <span class="inst-tag">DMM</span></h3>' +
+              '<div class="dmm">' +
+                '<div class="dmm-lcd">' +
+                  '<div class="dmm-top"><span id="dmm-mode" class="dmm-mode">V\u2387</span><span id="dmm-auto" class="dmm-auto"></span><span id="dmm-beep" class="dmm-beep"></span></div>' +
+                  '<div id="meter-readout" class="meter"></div>' +
+                '</div>' +
+                '<div class="dmm-dial">' +
+                  '<button class="dmm-pos" data-dmm="off">OFF</button>' +
+                  '<button class="dmm-pos active" data-dmm="vdc">V\u2387</button>' +
+                  '<button class="dmm-pos" data-dmm="vac">V\u223c</button>' +
+                  '<button class="dmm-pos" data-dmm="ohm">\u03a9</button>' +
+                  '<button class="dmm-pos" data-dmm="cont">\u2022)))</button>' +
+                  '<button class="dmm-pos" data-dmm="adc">A\u2387</button>' +
+                  '<button class="dmm-pos" data-dmm="diode">\u2192|</button>' +
+                '</div>' +
+                '<div class="dmm-jacks"><span class="jack red"></span><span class="jack blk"></span><span class="jack amber">10A</span></div>' +
+              '</div>' +
             '</div>' +
-            '<div class="sim-panel">' +
-              '<h3>Osiloskop</h3>' +
-              '<canvas id="scope-canvas" width="360" height="180"></canvas>' + '<div class="scope-ctl"><label>Zaman/div <select id="scope-tdiv"><option value="1">1\u00d7</option><option value="0.5">0.5\u00d7</option><option value="0.25">0.25\u00d7</option><option value="0.1">0.1\u00d7</option></select></label><span class="scope-readout" id="scope-readout"></span></div>' +
+            '<div class="sim-panel scope-panel">' +
+              '<h3>Osiloskop <span class="inst-tag">DSO</span></h3>' +
+              '<div class="scope-screen"><canvas id="scope-canvas" width="480" height="288"></canvas><div class="scope-menu" id="scope-meas"></div></div>' +
+              '<div class="scope-ctl">' +
+                '<label>VOLTS/DIV<select id="scope-vdiv"><option value="auto">AUTO</option><option value="0.1">0.1</option><option value="0.2">0.2</option><option value="0.5">0.5</option><option value="1">1</option><option value="2">2</option><option value="5">5</option><option value="10">10</option></select></label>' +
+                '<label>ZAMAN/DIV<select id="scope-tdiv"><option value="1">1\u00d7</option><option value="0.5">0.5\u00d7</option><option value="0.25">0.25\u00d7</option><option value="0.1">0.1\u00d7</option></select></label>' +
+              '</div>' +
+              '<div class="scope-knobs">' +
+                '<label class="sc-knob">KONUM<input type="range" id="scope-pos" min="0" max="1" step="0.02" value="0.5"></label>' +
+                '<label class="sc-knob">TRIGGER<input type="range" id="scope-trig" min="0" max="1" step="0.02" value="0.5"></label>' +
+              '</div>' +
+              '<div class="scope-readout" id="scope-readout"></div>' +
             '</div>' +
             '<p class="sim-desc" id="sim-desc"></p>' +
           '</aside>' +
@@ -1249,6 +1365,36 @@
       $("sim-play").textContent = simView.playing ? "⏸" : "▶";
     };
     $("sim-speed").oninput = e => { simView.speed = +e.target.value; }; $("scope-tdiv").onchange = e => { simView.scopeView = +e.target.value; };
+    $("scope-vdiv").onchange = e => { simView.scopeVdiv = e.target.value === "auto" ? "auto" : +e.target.value; };
+    $("scope-pos").oninput = e => { simView.scopePos = +e.target.value; };
+    $("scope-trig").oninput = e => { simView.scopeTrig = +e.target.value; };
+    document.querySelectorAll("[data-dmm]").forEach(b => b.onclick = () => {
+      simView.dmmMode = b.dataset.dmm;
+      document.querySelectorAll("[data-dmm]").forEach(x => x.classList.toggle("active", x === b));
+      updateMeter(simView.circ, pickFrame(simView.sim, simView.frame));
+    });
+    const scCv = document.getElementById("scope-canvas");
+    if (scCv) {
+      let curDrag = 0;
+      const curX = ev => Math.max(0.02, Math.min(0.98, (ev.clientX - scCv.getBoundingClientRect().left) / scCv.getBoundingClientRect().width));
+      const onCurMove = ev => { if (!curDrag) return; const fx = curX(ev); if (curDrag === 1) simView.cur1 = fx; else simView.cur2 = fx; };
+      const onCurUp = () => { if (curDrag) { curDrag = 0; scCv.style.cursor = "crosshair"; } };
+      scCv.addEventListener("mousedown", ev => {
+        const fx = (ev.clientX - scCv.getBoundingClientRect().left) / scCv.getBoundingClientRect().width;
+        const c1 = simView.cur1 == null ? 0.3 : simView.cur1, c2 = simView.cur2 == null ? 0.7 : simView.cur2;
+        curDrag = Math.abs(fx - c1) <= Math.abs(fx - c2) ? 1 : 2;
+        scCv.style.cursor = "ew-resize"; ev.preventDefault();
+      });
+      scCv.addEventListener("mousemove", ev => {
+        const fx = (ev.clientX - scCv.getBoundingClientRect().left) / scCv.getBoundingClientRect().width;
+        const c1 = simView.cur1 == null ? 0.3 : simView.cur1, c2 = simView.cur2 == null ? 0.7 : simView.cur2;
+        scCv.style.cursor = (Math.abs(fx - c1) < 0.05 || Math.abs(fx - c2) < 0.05) ? "ew-resize" : "crosshair";
+      });
+      if (simView._curMove) { window.removeEventListener("mousemove", simView._curMove); window.removeEventListener("mouseup", simView._curUp); }
+      simView._curMove = onCurMove; simView._curUp = onCurUp;
+      window.addEventListener("mousemove", onCurMove);
+      window.addEventListener("mouseup", onCurUp);
+    }
     $("sim-progress").oninput = e => { simView.playing = false; $("sim-play").textContent = "▶"; simView.frame = +e.target.value; };
     $("sim-reset").onclick = () => { simView.values = {}; selectCircuit(simView.src ? simView.src.id : simView.circ.id); };
     $("sim-save").onclick = saveCircuit;

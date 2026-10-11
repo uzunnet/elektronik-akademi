@@ -160,6 +160,21 @@ function car(ctx, x, y, col) {
   ctx.fillStyle = "#0b1120";
   ctx.beginPath(); ctx.arc(x + 16, y, 7, 0, 7); ctx.arc(x + 54, y, 7, 0, 7); ctx.fill();
 }
+function hazard(ctx, x, y, w, h) {
+  ctx.save();
+  rr(ctx, x, y, w, h, 2); ctx.clip();
+  ctx.fillStyle = "#141821"; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = "#d9b23a";
+  const step = 14;
+  for (let i = -h; i < w + h; i += step * 2) {
+    ctx.beginPath();
+    ctx.moveTo(x + i, y + h); ctx.lineTo(x + i + step, y + h);
+    ctx.lineTo(x + i + step + h, y); ctx.lineTo(x + i + h, y);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+  ctx.restore();
+}
 
 /* ====================== SAHNE TANIMLARI ====================== */
 (function () {
@@ -191,6 +206,7 @@ function car(ctx, x, y, col) {
         led(ctx, sx - 8, 138, 16, 12, on, "#4a9eff");
       }
       metalBox(ctx, bx - 10, by + 30, bw + 20, 34, 8, "#2c3a50", "#161f2d");
+      hazard(ctx, bx - 10, by + 52, bw + 20, 10);
       ctx.fillStyle = "#1b2534";
       ctx.fillRect(bx + 30, by + 60, 14, 44); ctx.fillRect(bx + bw - 44, by + 60, 14, 44);
       const beltG = ctx.createLinearGradient(0, 250, 0, 276);
@@ -385,6 +401,7 @@ function car(ctx, x, y, col) {
       ctx.fillStyle = "#2b3648"; ctx.beginPath(); ctx.arc(pX, pY, 16, 0, 7); ctx.fill();
       ctx.fillStyle = "#4a9eff"; ctx.beginPath(); ctx.arc(pX, pY, 6, 0, 7); ctx.fill();
       metalBox(ctx, pX - 12, pY, 24, 30, 4, "#2b3648", "#16202e");
+      hazard(ctx, pX - 12, pY + 20, 24, 8);
       car(ctx, 150, 328, plc.outputs.Y0 ? "#3d7bd6" : "#44506a");
       car(ctx, 560, 328, "#3a8f6a");
       flabel(ctx, 430, 120, s.ang > 45 ? "AÇIK" : "KAPALI", s.ang > 45 ? "#2fd66b" : "#ff5a4d", "800 30px 'Segoe UI',sans-serif");

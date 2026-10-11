@@ -409,6 +409,15 @@ table.tbl tr:nth-child(even) td{background:rgba(255,255,255,.02)}
 .sc-knob input{width:100%;accent-color:#f59e0b}
 .scope-readout{margin-top:9px;font-family:Consolas,monospace;font-size:11px;color:#7f9bbf}
 .scope-readout b{color:#7fe0ff}
+.scope-tools{display:flex;gap:8px;margin-top:8px}
+.scope-btn{flex:1;padding:6px 8px;border-radius:6px;border:1px solid #2a3d55;background:#132132;color:#bcd4ee;font-family:Consolas,monospace;font-size:11px;font-weight:700;letter-spacing:.4px;cursor:pointer;transition:.12s}
+.scope-btn:hover{border-color:#3f6fa8;color:#fff}
+.scope-btn.stopped{background:#3a1113;border-color:#ef4444;color:#ff8a8a;box-shadow:0 0 9px rgba(239,68,68,.4)}
+.dmm-btn{margin-top:6px;padding:5px 0;border-radius:6px;border:1px solid var(--line2);background:var(--bg3);color:#cdd9e8;font-size:10px;font-weight:700;font-family:Consolas,monospace;cursor:pointer;transition:.12s}
+.dmm-btn:hover{border-color:#43d9ff}
+.dmm-btn.active{background:#43d9ff;color:#0b0f16;border-color:#43d9ff;box-shadow:0 0 9px rgba(67,217,255,.5)}
+.dmm-hold-ind{font-size:10px;font-weight:800;color:#8a97ad}
+.dmm-hold-ind.on{color:#0a7d2f}
 .sim-desc{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
 .sim-desc b{color:#dbe6f2}
 .wire{stroke:#7a93b0;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}

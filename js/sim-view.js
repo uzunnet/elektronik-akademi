@@ -510,10 +510,14 @@
       ctx.stroke(); ctx.shadowBlur = 0;
     });
     const trig = simView.scopeTrig == null ? 0.5 : simView.scopeTrig;
+    const slope = simView.scopeSlope == null ? 1 : simView.scopeSlope;
     const yTrig = yFor(mid + (0.5 - trig) * 8 * vdiv);
     if (yTrig > T && yTrig < T + gy) {
       ctx.strokeStyle = "rgba(245,158,11,.65)"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(L, yTrig); ctx.lineTo(L + gx, yTrig); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = "#f59e0b"; ctx.beginPath(); ctx.moveTo(L + gx, yTrig); ctx.lineTo(L + gx + 8, yTrig - 4); ctx.lineTo(L + gx + 8, yTrig + 4); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "#f59e0b"; ctx.beginPath();
+      if (slope >= 0) { ctx.moveTo(L - 8, yTrig + 4); ctx.lineTo(L - 1, yTrig + 4); ctx.lineTo(L - 4, yTrig - 4); }
+      else { ctx.moveTo(L - 8, yTrig - 4); ctx.lineTo(L - 1, yTrig - 4); ctx.lineTo(L - 4, yTrig + 4); }
+      ctx.closePath(); ctx.fill();
     }
     const c1 = simView.cur1 == null ? 0.3 : simView.cur1, c2 = simView.cur2 == null ? 0.7 : simView.cur2;
     [[c1, "#22d3ee", "T1"], [c2, "#f472b6", "T2"]].forEach(cd => {
@@ -531,6 +535,10 @@
     ctx.fillStyle = "#8fb0d6"; ctx.font = "10px Consolas,monospace";
     ctx.textAlign = "left"; ctx.fillText(vdiv >= 1 ? vdiv.toFixed(vdiv < 10 ? 1 : 0) + " V/div" : (vdiv * 1000).toFixed(0) + " mV/div", L + 2, H - 6);
     ctx.textAlign = "right"; ctx.fillText("t " + fmtTime(span / 10) + "/div", L + gx - 2, H - 6);
+    if (simView.scopeRun === false) {
+      ctx.fillStyle = "rgba(239,68,68,.92)"; ctx.font = "bold 11px Consolas,monospace"; ctx.textAlign = "right";
+      ctx.fillText("\u275a\u275a STOP", L + gx - 4, T + 13);
+    }
 
     const c0 = nets[0], vals = [];
     for (let i = 0; i < N; i++) { const t = sim.frames[i].t; if (t < t0 || t > t1) continue; vals.push(sim.frames[i].V[c0] || 0); }
@@ -552,7 +560,8 @@
       '<span>1/\u0394t <b>' + (dtC > 0 ? (1 / (dtC / 1000) >= 1000 ? (1 / (dtC / 1000) / 1000).toFixed(2) + "k" : (1 / (dtC / 1000)).toFixed(1)) : "\u2014") + '</b></span>';
     const ro = document.getElementById("scope-readout");
     if (ro) ro.innerHTML = nets.map(n => '<span style="color:' + netColor(n) + '">\u25cf</span>' + n + " " + (frame ? (frame.V[n] || 0).toFixed(2) : "0") + "V").join(" &nbsp; ") +
-      " \u00b7 " + (simView.scopeVdiv && simView.scopeVdiv !== "auto" ? vdiv + " V/div (MAN)" : "V/div AUTO");
+      " \u00b7 " + (simView.scopeVdiv && simView.scopeVdiv !== "auto" ? vdiv + " V/div (MAN)" : "V/div AUTO") +
+      (simView.scopeRun === false ? " \u00b7 <b style=\"color:#ef4444\">STOP</b>" : " \u00b7 <b style=\"color:#22c55e\">RUN</b>");
   }
 
   function drawBode(ctx, W, H, L, R, T, B, gx, gy, sim) {
@@ -656,7 +665,14 @@
       if (t) t.textContent = net + ": " + (V[net] == null ? "?" : V[net].toFixed(2)) + "V";
     });
     const sc = document.getElementById("scope-canvas");
-    if (sc) drawScope(sc, sim, frame);
+    if (sc) {
+      let scopeFrame = frame;
+      if (sim.mode === "tran") {
+        if (simView.scopeRun === false) { if (!simView._holdFrame) simView._holdFrame = frame; scopeFrame = simView._holdFrame; }
+        else simView._holdFrame = null;
+      }
+      drawScope(sc, sim, scopeFrame);
+    }
     updateParticles(dt);
     updateMeter(circ, frame);
     const pb = document.getElementById("sim-progress");
@@ -734,6 +750,9 @@
   }
   function updateMeter(circ, frame) {
     const el = document.getElementById("meter-readout"); if (!el) return;
+    const hi = document.getElementById("dmm-hold-ind");
+    if (hi) { hi.textContent = simView.dmmHold ? "HOLD" : ""; hi.classList.toggle("on", !!simView.dmmHold); }
+    if (simView.dmmHold) return;
     const m = dmmMeasure(circ, frame, simView.sim);
     const modeLbl = DMM_MODES[simView.dmmMode || "vdc"] || "";
     if (m.off) { el.innerHTML = '<div class="dmm-digits dim">-- --</div>'; setDmmChips("OFF", "", ""); return; }
@@ -1313,7 +1332,7 @@
               '<h3>Multimetre <span class="inst-tag">DMM</span></h3>' +
               '<div class="dmm">' +
                 '<div class="dmm-lcd">' +
-                  '<div class="dmm-top"><span id="dmm-mode" class="dmm-mode">V\u2387</span><span id="dmm-auto" class="dmm-auto"></span><span id="dmm-beep" class="dmm-beep"></span></div>' +
+                  '<div class="dmm-top"><span id="dmm-mode" class="dmm-mode">V\u2387</span><span id="dmm-hold-ind" class="dmm-hold-ind"></span><span id="dmm-auto" class="dmm-auto"></span><span id="dmm-beep" class="dmm-beep"></span></div>' +
                   '<div id="meter-readout" class="meter"></div>' +
                 '</div>' +
                 '<div class="dmm-dial">' +
@@ -1324,6 +1343,7 @@
                   '<button class="dmm-pos" data-dmm="cont">\u2022)))</button>' +
                   '<button class="dmm-pos" data-dmm="adc">A\u2387</button>' +
                   '<button class="dmm-pos" data-dmm="diode">\u2192|</button>' +
+                  '<button class="dmm-btn" id="dmm-hold">HOLD</button>' +
                 '</div>' +
                 '<div class="dmm-jacks"><span class="jack red"></span><span class="jack blk"></span><span class="jack amber">10A</span></div>' +
               '</div>' +
@@ -1334,10 +1354,15 @@
               '<div class="scope-ctl">' +
                 '<label>VOLTS/DIV<select id="scope-vdiv"><option value="auto">AUTO</option><option value="0.1">0.1</option><option value="0.2">0.2</option><option value="0.5">0.5</option><option value="1">1</option><option value="2">2</option><option value="5">5</option><option value="10">10</option></select></label>' +
                 '<label>ZAMAN/DIV<select id="scope-tdiv"><option value="1">1\u00d7</option><option value="0.5">0.5\u00d7</option><option value="0.25">0.25\u00d7</option><option value="0.1">0.1\u00d7</option></select></label>' +
+                '<label>TRIG<select id="scope-slope"><option value="1">\u25b2 Y\u00fckselen</option><option value="-1">\u25bc D\u00fc\u015fen</option></select></label>' +
               '</div>' +
               '<div class="scope-knobs">' +
                 '<label class="sc-knob">KONUM<input type="range" id="scope-pos" min="0" max="1" step="0.02" value="0.5"></label>' +
                 '<label class="sc-knob">TRIGGER<input type="range" id="scope-trig" min="0" max="1" step="0.02" value="0.5"></label>' +
+              '</div>' +
+              '<div class="scope-tools">' +
+                '<button type="button" id="scope-run" class="scope-btn">\u25b6 RUN</button>' +
+                '<button type="button" id="scope-auto" class="scope-btn">AUTO SET</button>' +
               '</div>' +
               '<div class="scope-readout" id="scope-readout"></div>' +
             '</div>' +
@@ -1368,8 +1393,28 @@
     $("scope-vdiv").onchange = e => { simView.scopeVdiv = e.target.value === "auto" ? "auto" : +e.target.value; };
     $("scope-pos").oninput = e => { simView.scopePos = +e.target.value; };
     $("scope-trig").oninput = e => { simView.scopeTrig = +e.target.value; };
+    $("scope-slope").onchange = e => { simView.scopeSlope = +e.target.value; };
+    $("scope-run").onclick = () => {
+      simView.scopeRun = simView.scopeRun === false ? true : false;
+      if (simView.scopeRun) simView._holdFrame = null;
+      const b = $("scope-run");
+      if (b) { b.textContent = simView.scopeRun ? "\u25b6 RUN" : "\u275a\u275a STOP"; b.classList.toggle("stopped", simView.scopeRun === false); }
+    };
+    $("scope-auto").onclick = () => {
+      simView.scopeVdiv = "auto"; simView.scopeView = 1; simView.scopePos = 0.5; simView.scopeTrig = 0.5;
+      const vd = $("scope-vdiv"); if (vd) vd.value = "auto";
+      const td = $("scope-tdiv"); if (td) td.value = "1";
+      const po = $("scope-pos"); if (po) po.value = "0.5";
+      const tr = $("scope-trig"); if (tr) tr.value = "0.5";
+    };
+    $("dmm-hold").onclick = () => {
+      simView.dmmHold = !simView.dmmHold;
+      const b = $("dmm-hold"); if (b) b.classList.toggle("active", !!simView.dmmHold);
+      updateMeter(simView.circ, pickFrame(simView.sim, simView.frame));
+    };
     document.querySelectorAll("[data-dmm]").forEach(b => b.onclick = () => {
-      simView.dmmMode = b.dataset.dmm;
+      simView.dmmMode = b.dataset.dmm; simView.dmmHold = false;
+      const hb = document.getElementById("dmm-hold"); if (hb) hb.classList.remove("active");
       document.querySelectorAll("[data-dmm]").forEach(x => x.classList.toggle("active", x === b));
       updateMeter(simView.circ, pickFrame(simView.sim, simView.frame));
     });

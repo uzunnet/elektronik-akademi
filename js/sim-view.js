@@ -112,6 +112,21 @@
     const c = rotCenter(g);
     return [[g[0], g[1]], [g[2], g[1]], [g[2], g[3]], [g[0], g[3]]].map(pt => rotPt({ x: pt[0], y: pt[1] }, c, rot || 0));
   }
+  function geometryFor(circ) {
+    const g = {};
+    for (const p of circ.parts) {
+      if (!p.geo) continue;
+      if (p.rot) {
+        const c = rotCenter(p.geo);
+        const a = rotPt({ x: p.geo[0], y: p.geo[1] }, c, p.rot);
+        const b = rotPt({ x: p.geo[2], y: p.geo[3] }, c, p.rot);
+        g[p.id] = [a.x, a.y, b.x, b.y];
+      } else {
+        g[p.id] = p.geo;
+      }
+    }
+    return g;
+  }
   function labelPos(p) {
     const cs = geoCorners(p.geo, p.rot);
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
